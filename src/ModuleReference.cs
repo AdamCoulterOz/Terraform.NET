@@ -10,9 +10,7 @@ public class ModuleReference
 
 	public ModuleReference(string @namespace, string name, string provider, string version)
 		: this(@namespace, name, provider)
-	{
-		Version = version;
-	}
+		=> Version = version;
 
 	public string Namespace { get; set; }
 	public string Name { get; set; }
@@ -33,8 +31,5 @@ public class ModuleReference
 		}
 	}
 
-	public override string ToString()
-	{
-		return Path;
-	}
+	public override string ToString() => Path;
 }

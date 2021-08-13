@@ -1,27 +1,11 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using CliWrap;
 using CliWrap.Buffered;
-using Microsoft.Extensions.Logging;
-using TF.Model;
 
 namespace TF;
+
 public class Terraform : IDisposable
 {
-	private readonly ILogger _log;
 	private readonly string _tfPath;
-	public Terraform(Backend backend, DirectoryInfo rootPath, string tfPath, ILogger log)
-	{
-		_tfPath = tfPath;
-		Backend = backend;
-		RootPath = rootPath;
-		Variables = new Variables();
-		Providers = new ProviderCollection();
-		Configuration = new Configuration();
-		_log = log;
-	}
-	public void Dispose() => RootPath.Delete(true);
-
 	public DirectoryInfo RootPath { get; }
 	public Variables Variables { get; set; }
 	public ProviderCollection Providers { get; set; }
@@ -29,40 +13,38 @@ public class Terraform : IDisposable
 	public Backend Backend { get; set; }
 	public Stream? OutputStream { get; set; }
 
-	public async Task<string> Init()
+	public Terraform(Backend backend, DirectoryInfo rootPath, string tfPath)
 	{
-		var hasConfiguration = await Configuration.WriteConfigurationAsync(RootPath);
-		return await Command("init", withConfiguration: hasConfiguration, withBackendConfig: true);
-	}
-	public async Task<string> Refresh() => await Command("refresh", withVars: true);
-	public async Task<string> Validate() => await Command("validate");
-	public async Task<string> Apply() => await Command("apply", withVars: true, autoApprove: true);
-	public async Task<string> Destroy() => await Command("destroy", withVars: true, autoApprove: true);
-	public async Task<(Plan? Plan, string StandardOutput)> Plan()
-	{
-		const string reviewTfPlanPath = "reviewTFPlan";
-		// add "-detailed-exitcode" to command to get back different RCs
-		// 0 = Empty diff
-		// 1 = Error
-		// 2 = Non-empty diff
-		var stdOut = await Command("plan", withVars: true, outFile: reviewTfPlanPath);
-		var showPlanResult = await Cli.Wrap("terraform")
-			.WithWorkingDirectory(RootPath.FullName)
-			.WithArguments($"show -json {reviewTfPlanPath}")
-			.ExecuteBufferedAsync();
-		var jsonPlan = showPlanResult.StandardOutput;
-		JsonSerializerOptions options = new() { Converters = { new JsonStringEnumConverter() } };
-		var plan = JsonSerializer.Deserialize<Plan>(jsonPlan, options);
-		return (plan, stdOut);
+		_tfPath = tfPath;
+		Backend = backend;
+		RootPath = rootPath;
+		Variables = new Variables();
+		Providers = new ProviderCollection();
+		Configuration = new Configuration();
 	}
 
-	private async Task<string> Command(string action, bool autoApprove = false, bool withVars = false,
-		string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false)
+	public void Dispose()
+	{
+		RootPath.Delete(true);
+		GC.SuppressFinalize(this);
+	}
+
+	public async Task<TFResult> Init() => await Command("init", withConfiguration: await Configuration.WriteConfigurationAsync(RootPath), withBackendConfig: true);
+	public async Task<TFResult> Refresh() => await Command("refresh", withVars: true);
+	public async Task<TFResult> Validate() => await Command("validate");
+	public async Task<TFResult> Apply() => await Command("apply", withVars: true, autoApprove: true);
+	public async Task<TFResult> Destroy() => await Command("destroy", withVars: true, autoApprove: true);
+	public async Task<TFResult> Plan() => await Command("plan", withVars: true, withDetailedExitCode: true);
+
+	private async Task<TFResult> Command(string action, bool autoApprove = false, bool withVars = false,
+		string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false,
+		bool withDetailedExitCode = false)
 	{
 		var command = Cli.Wrap(_tfPath)
 			.WithWorkingDirectory(RootPath.FullName);
 		var arguments = new List<string> { action };
 		if (autoApprove) arguments.Add("-auto-approve");
+		if (withDetailedExitCode) arguments.Add("-detailed-exitcode");
 		if (asJson) arguments.Add("-json");
 		if (outFile != null) arguments.Add($"-out={outFile}");
 		if (withVars)
@@ -86,15 +68,15 @@ public class Terraform : IDisposable
 		if (OutputStream is not null)
 			command = command.WithStandardOutputPipe(PipeTarget.ToStream(OutputStream, true))
 							 .WithStandardErrorPipe(PipeTarget.ToStream(OutputStream, true));
-		try
+
+		var cmdResult = await command.WithValidation(CommandResultValidation.None).ExecuteBufferedAsync();
+
+		bool? planHasChanges = withDetailedExitCode && cmdResult.ExitCode == 2 ? true : null;
+		var success = cmdResult.ExitCode == 0 || (planHasChanges.HasValue && planHasChanges.Value);
+
+		return new TFResult(success, cmdResult.StandardOutput, cmdResult.StandardError)
 		{
-			var task = await command.WithValidation(CommandResultValidation.None).ExecuteBufferedAsync();
-			return task.StandardOutput;
-		}
-		catch (Exception e)
-		{
-			_log.LogError(e, "Occured while trying to run terraform-cli");
-			throw;
-		}
+			PlanHasChanges = planHasChanges
+		};
 	}
 }
