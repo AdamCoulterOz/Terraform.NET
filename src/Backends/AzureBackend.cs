@@ -47,7 +47,7 @@ public class AzureBackend : Backend
         string containerName, string blobName) : base(credential)
     {
         TenantId = tenantId;
-        const string storageAccountResourceType = "Microsoft.Storage/storageAccounts/blobServices/containers";
+        const string storageAccountResourceType = "Microsoft.Storage/storageAccounts";
         var storageAccount = ResourceId.FromString(storageAccountResourceId);
         if (storageAccount.FullResourceType != storageAccountResourceType)
             throw new Exception($"Provided resourceId isn't of type '{storageAccountResourceType}'");
