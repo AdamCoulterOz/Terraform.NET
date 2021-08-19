@@ -14,7 +14,7 @@ public class MySqlBasicCredential : MySqlCredential
 	}
 
 	[Terraform("username", "MYSQL_USERNAME")]
-	public string Username => $"{_username}@{_server.Host}";
+	public string Username => _username;
 
 	[Terraform("password", "MYSQL_PASSWORD")]
 	public string Password => _password;
