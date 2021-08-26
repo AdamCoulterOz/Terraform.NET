@@ -9,7 +9,7 @@ using Azure.Identity;
 namespace TF;
 public class ModuleRegistry
 {
-	public ModuleRegistry(Uri endpoint) : this(endpoint, endpoint.Host) { }
+	public ModuleRegistry(Uri endpoint) : this(endpoint, endpoint.AbsoluteUri) { }
 
 	public ModuleRegistry(Uri endpoint, string oAuthTarget)
 	{
