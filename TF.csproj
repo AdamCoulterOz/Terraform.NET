@@ -4,19 +4,22 @@
     <TargetFramework>net6.0</TargetFramework>
     <Version>1.0.8</Version>
     <Nullable>enable</Nullable>
+    <LangVersion>10.0</LangVersion>
     <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
   </PropertyGroup>
 
   <PropertyGroup>
     <Title>Terraform.NET</Title>
+    
     <Authors>Adam Coulter</Authors>
     <PackageId>Terraform.NET</PackageId>
+    <PackageDescription>A dotnet wrapper for the terraform CLI</PackageDescription>
     <PackageTags>terraform;wrapper;cli</PackageTags>
     <PackageIcon>packageIcon.png</PackageIcon>
     <PackageIconFullPath>$(MSBuildThisFileDirectory)packageIcon.png</PackageIconFullPath>
     <PackageProjectUrl>https://github.com/AdamCoulterOz/Terraform.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AdamCoulterOz/Terraform.NET</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RootNamespace>TF</RootNamespace>
     <AssemblyName>Terraform.NET</AssemblyName>
   </PropertyGroup>
