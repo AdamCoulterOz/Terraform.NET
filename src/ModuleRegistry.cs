@@ -9,12 +9,12 @@ using Azure.Identity;
 namespace TF;
 public class ModuleRegistry
 {
-	public ModuleRegistry(Uri endpoint) : this(endpoint, endpoint.AbsoluteUri) { }
+	public ModuleRegistry(Uri endpoint) : this(endpoint, endpoint) { }
 
-	public ModuleRegistry(Uri endpoint, string oAuthTarget)
+	public ModuleRegistry(Uri endpoint, Uri oAuthTarget)
 	{
 		Endpoint = endpoint;
-		Token = GetOAuthToken(oAuthTarget);
+		Token = GetOAuthToken(new Uri(oAuthTarget, ".default").AbsoluteUri);
 	}
 
 	public JwtSecurityToken Token { get; set; }
@@ -67,7 +67,7 @@ public class ModuleRegistry
 		var options = new DefaultAzureCredentialOptions
 		{ ExcludeSharedTokenCacheCredential = true };
 		var credential = new DefaultAzureCredential(options);
-		var tokenContext = new TokenRequestContext(new[] { $"{targetAudience}/.default" });
+		var tokenContext = new TokenRequestContext(new[] { targetAudience });
 		var accessToken = credential.GetToken(tokenContext);
 		return new JwtSecurityToken(accessToken.Token);
 	}
