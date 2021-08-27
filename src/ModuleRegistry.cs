@@ -3,18 +3,14 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Azure.Core;
-using Azure.Identity;
 
 namespace TF;
 public class ModuleRegistry
 {
-	public ModuleRegistry(Uri endpoint) : this(endpoint, endpoint) { }
-
-	public ModuleRegistry(Uri endpoint, Uri oAuthTarget)
+	public ModuleRegistry(Uri endpoint, string jwtToken)
 	{
 		Endpoint = endpoint;
-		Token = GetOAuthToken(new Uri(oAuthTarget, ".default").AbsoluteUri);
+		Token = new JwtSecurityToken(jwtToken);
 	}
 
 	public JwtSecurityToken Token { get; set; }
@@ -60,15 +56,5 @@ public class ModuleRegistry
 		readStream.Close();
 		ZipFile.ExtractToDirectory(filePath.FullName, filePath.DirectoryName!);
 		filePath.Delete();
-	}
-
-	public static JwtSecurityToken GetOAuthToken(string targetAudience)
-	{
-		var options = new DefaultAzureCredentialOptions
-		{ ExcludeSharedTokenCacheCredential = true };
-		var credential = new DefaultAzureCredential(options);
-		var tokenContext = new TokenRequestContext(new[] { targetAudience });
-		var accessToken = credential.GetToken(tokenContext);
-		return new JwtSecurityToken(accessToken.Token);
 	}
 }
