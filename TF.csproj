@@ -1,12 +1,26 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
     <Nullable>enable</Nullable>
     <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl> 
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Title>Terraform.NET</Title>
+    <Authors>Adam Coulter</Authors>
+    <PackageId>Terraform.NET</PackageId>
+    <PackageTags>terraform;wrapper;cli</PackageTags>
+    <PackageIcon>packageIcon.png</PackageIcon>
+    <PackageIconFullPath>$(MSBuildThisFileDirectory)packageIcon.png</PackageIconFullPath>
+    <PackageProjectUrl>https://github.com/AdamCoulterOz/Terraform.NET</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl> 
+    <RootNamespace>TF</RootNamespace>
+    <AssemblyName>Terraform.NET</AssemblyName>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.4.1" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.37.1" />
@@ -14,4 +28,5 @@
     <PackageReference Include="Cliwrap" Version="3.3.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.1" />
   </ItemGroup>
+
 </Project>
