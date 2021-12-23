@@ -4,13 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <Version>0.1.0</Version>
     <Nullable>enable</Nullable>
-    <LangVersion>10.0</LangVersion>
-    <_FunctionsSkipCleanOutput>true</_FunctionsSkipCleanOutput>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
     <Title>Terraform.NET</Title>
-    
+
     <Authors>Adam Coulter</Authors>
     <PackageId>Terraform.NET</PackageId>
     <PackageDescription>A dotnet wrapper for the terraform CLI</PackageDescription>
