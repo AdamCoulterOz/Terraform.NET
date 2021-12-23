@@ -3,7 +3,7 @@ using CliWrap.Buffered;
 
 namespace TF;
 
-public class Terraform : IDisposable
+public class Terraform
 {
 	private readonly string _tfPath;
 	public DirectoryInfo RootPath { get; }
@@ -23,10 +23,9 @@ public class Terraform : IDisposable
 		Configuration = new Configuration();
 	}
 
-	public void Dispose()
-	{
+	~Terraform()
+    {
 		RootPath.Delete(true);
-		GC.SuppressFinalize(this);
 	}
 
 	public async Task<TFResult> Init() => await Command("init", withConfiguration: await Configuration.WriteConfigurationAsync(RootPath), withBackendConfig: true);
