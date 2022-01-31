@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
-      - run: dotnet build
+      - run: dotnet build src/TF.csproj
 
       # Publish
       - name: publish on version change
