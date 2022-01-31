@@ -21,14 +21,12 @@ public class ProvisioningTests
     {
         // Arrange
         File.Copy("./ProvisioningTest.tf", Path.Join(_testDir.FullName, "ProvisioningTest.tf"));
-        var initResult = (await _sut!.Init());
-        initResult.Should().NotBeNull();
-        _testDir.Exists.Should().BeTrue();
-
-        // Act
-        _sut = null;
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        using (_sut)
+        {
+            var initResult = (await _sut!.Init());
+            initResult.Should().NotBeNull();
+            _testDir.Exists.Should().BeTrue();
+        }
 
         // Asset
         _testDir.Exists.Should().BeFalse();
