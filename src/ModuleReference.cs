@@ -1,16 +1,13 @@
 namespace TF;
 public class ModuleReference
 {
-	public ModuleReference(string @namespace, string name, string provider)
+	public ModuleReference(string @namespace, string name, string provider, string? version = null)
 	{
 		Namespace = @namespace;
 		Name = name;
 		Provider = provider;
+		Version = version;
 	}
-
-	public ModuleReference(string @namespace, string name, string provider, string version)
-		: this(@namespace, name, provider)
-		=> Version = version;
 
 	public string Namespace { get; set; }
 	public string Name { get; set; }
