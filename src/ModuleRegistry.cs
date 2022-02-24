@@ -31,20 +31,17 @@ public class ModuleRegistry
 		var response = await client.SendAsync(request);
 		var moduleJson = await response.Content.ReadAsStringAsync();
 		var module = JsonSerializer.Deserialize<Module>(moduleJson);
-		var version = module!.LatestVersion;
+		if(module is null)
+			throw new ModuleNotFoundException(moduleReference);
+		moduleReference.Version ??= module.LatestVersion;
 
-		urlBuilder = new UriBuilder(Endpoint)
-		{
-			Scheme = "https",
-			Path = $"v1/modules/{moduleReference.Path}/{version}/download"
-		};
+		urlBuilder.Path += "/download";
 		request = new HttpRequestMessage(HttpMethod.Get, urlBuilder.Uri);
 		request.Headers.Authorization = authHeader;
 		response = await client.SendAsync(request);
 		var urlString = response.Headers.GetValues("X-Terraform-Get").First();
 		if (response.StatusCode != HttpStatusCode.NoContent || urlString is null)
-			throw new Exception(
-				$"Registry didnt return valid module response. Is the module reference correct? {moduleReference}");
+			throw new ModuleNotFoundException(moduleReference);
 		var urlDownload = new Uri(urlString);
 		var downloadRequest = new HttpRequestMessage(HttpMethod.Get, urlDownload);
 		var download = await client.SendAsync(downloadRequest, HttpCompletionOption.ResponseHeadersRead);

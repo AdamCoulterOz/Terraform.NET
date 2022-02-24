@@ -17,16 +17,7 @@ public class ModuleReference
 	public string Path => string.Join('/', Keys);
 	public string FullName => string.Join('-', Keys);
 
-	private IEnumerable<string> Keys
-	{
-		get
-		{
-			var keys = new List<string>() { Namespace, Name, Provider };
-			if (Version is not null)
-				keys.Add(Version);
-			return keys;
-		}
-	}
-
+	private IEnumerable<string> Keys => new List<string?>() { Namespace, Name, Provider, Version }
+		.Where(k => !string.IsNullOrEmpty(k)).Select(k => k!).ToList();
 	public override string ToString() => Path;
 }

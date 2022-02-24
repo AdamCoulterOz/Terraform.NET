@@ -10,11 +10,11 @@ public class ProviderCollection
 
 	public void SetDefault(Provider provider) => SetAliasInternal(_defaultAlias, provider);
 
-	/// <param name="alias">Can't be 'default', as it is reserved.</param>
+	/// <param name="alias">Value can't be "default", as it is reserved.</param>
 	public void SetAlias(string alias, Provider provider)
 	{
 		if (alias == _defaultAlias)
-			throw new Exception($"Can't use '{_defaultAlias}' alias key as it is reserved.");
+			throw new ArgumentOutOfRangeException(nameof(alias), $"Can't use \"{_defaultAlias}\" as alias key because it is reserved.");
 		SetAliasInternal(alias, provider);
 	}
 
