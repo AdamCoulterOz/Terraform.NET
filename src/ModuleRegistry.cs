@@ -7,13 +7,16 @@ using System.Text.Json;
 namespace TF;
 public class ModuleRegistry
 {
-	public JwtSecurityToken Token { get; set; }
-	public Uri Endpoint { get; set; }
-	public ModuleRegistry(Uri endpoint, string jwtToken)
-	{
-		Endpoint = endpoint;
-		Token = new JwtSecurityToken(jwtToken);
-	}
+	private readonly Func<Task<JwtSecurityToken>>? _getToken;
+	private JwtSecurityToken? _token;
+	private async Task<JwtSecurityToken> GetTokenAsync() => _token ??= await _getToken!();
+	public Uri Endpoint { get; init; }
+
+	public ModuleRegistry(Uri endpoint, JwtSecurityToken jwtToken)
+		=> (Endpoint, _token) = (endpoint, jwtToken);
+
+	public ModuleRegistry(Uri endpoint, Func<Task<JwtSecurityToken>> getJwtToken)
+		=> (Endpoint, _getToken) = (endpoint, getJwtToken);
 
 	public async Task<Module> GetModuleAsync(ModuleReference moduleReference)
 	{
@@ -45,15 +48,13 @@ public class ModuleRegistry
 		ZipFile.ExtractToDirectory(filePath.FullName, filePath.DirectoryName!);
 		filePath.Delete();
 	}
-
-	private AuthenticationHeaderValue _authHeader => new AuthenticationHeaderValue("Bearer", Token.RawData);
 	private async Task<HttpResponseMessage> httpRequest(HttpMethod method, string path, bool justHeaders = false)
 		=> await httpRequest(method, new UriBuilder(Endpoint) { Path = path }.Uri, justHeaders);
 	private async Task<HttpResponseMessage> httpRequest(HttpMethod method, Uri uri, bool justHeaders = false)
 	{
 		using var client = new HttpClient();
 		var request = new HttpRequestMessage(method, uri);
-		request.Headers.Authorization = _authHeader;
+		request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", (await GetTokenAsync()).RawData);
 		var completionOption = justHeaders ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead;
 		var response = await client.SendAsync(request, completionOption);
 		return response;
