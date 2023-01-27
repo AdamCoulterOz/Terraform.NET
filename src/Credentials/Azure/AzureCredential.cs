@@ -1,14 +1,6 @@
 using Azure.Core;
 
 namespace TF.Credentials.Azure;
-
-/// <summary>
-///     Base Abstract Azure Credential<br />
-///     Concrete classes:<br />
-///     - <see cref="AzureCredentialMSI" /><br />
-///     - <see cref="AzureCredentialSPSecret" /><br />
-///     - <see cref="AzureCredentialSPCert" />
-/// </summary>
 public abstract class AzureCredential : Credential
 {
 	public AzureCredential(Guid tenantId, Guid? clientId = null, Guid? subscriptionId = null)
