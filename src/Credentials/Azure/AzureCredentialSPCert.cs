@@ -13,15 +13,15 @@ namespace TF.Credentials.Azure;
 ///         on how to setup a certificate credential
 ///     </see>
 /// </summary>
-public class AzureSPCertCredential : AzureCredential
+public class AzureCredentialSPCert : AzureCredential
 {
 	/// <param name="tenantId">Azure Organisation (tenant) Id</param>
 	/// <param name="clientId">Azure AD Application Client Id</param>
 	/// <param name="certificatePath">File path to X509 certificate</param>
 	/// <param name="certificatePassword">Certificate password</param>
-	public AzureSPCertCredential(Guid tenantId, Guid clientId, string certificatePath,
-		SecureString certificatePassword)
-		: base(tenantId, clientId)
+	public AzureCredentialSPCert(Guid tenantId, Guid clientId, string certificatePath,
+		SecureString certificatePassword, Guid? subscriptionId = null)
+		: base(tenantId, clientId, subscriptionId)
 	{
 		CertificatePath = new FileInfo(certificatePath);
 		if (!CertificatePath.Exists)

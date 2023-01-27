@@ -6,14 +6,14 @@ namespace TF.Credentials.Azure;
 /// <summary>
 ///     Azure AD Application Identity Secret Credential
 /// </summary>
-public class AzureSPSecretCredential : AzureCredential
+public class AzureCredentialSPSecret : AzureCredential
 {
 	/// <param name="subscriptionId">Azure Subscription Id</param>
 	/// <param name="tenantId">Azure Organisation (tenant) Id</param>
 	/// <param name="clientId">Azure AD Application Client Id</param>
 	/// <param name="clientSecret">Azure AD Application Client Secret</param>
-	public AzureSPSecretCredential(Guid tenantId, Guid clientId, string clientSecret)
-		: base(tenantId, clientId)
+	public AzureCredentialSPSecret(Guid tenantId, Guid clientId, string clientSecret, Guid? subscriptionId = null)
+		: base(tenantId, clientId, subscriptionId)
 	{
 		ClientSecret = clientSecret;
 	}
