@@ -1,7 +1,7 @@
 using TF.Credentials.Azure;
 
-namespace TF.Providers;
-public class AzureProvider : Provider
+namespace TF.Extensions.Azure.Provider;
+public class AzureProvider : TF.Provider
 {
 	public AzureProvider(Guid subscriptionId, AzureCredential credential) : base(credential)
 		=> SubscriptionId = subscriptionId;
