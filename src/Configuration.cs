@@ -7,14 +7,24 @@ public class Configuration
 	private Dictionary<string, string> Credentials { get; } = new Dictionary<string, string>();
 
 	public static string FilePath(DirectoryInfo workingFolder)
-	    => Path.Combine(workingFolder.FullName, ConfigurationFileName);
+		=> Path.Combine(workingFolder.FullName, ConfigurationFileName);
 
+	/// <summary>
+	/// Credential token for a given hostname
+	/// </summary>
+	/// <param name="hostname"></param>
+	/// <param name="token"></param>
 	public void AddCredential(Uri hostname, string token) => Credentials.Add(hostname.Host, token);
 
 	public async Task<bool> WriteConfigurationAsync(DirectoryInfo workingFolder)
 	{
-		var configuration = Credentials.Aggregate("", (current, keyValuePair)
-			=> current + $"credentials \"{keyValuePair.Key}\" {{\n\ttoken = \"{keyValuePair.Value}\"\n}}\n\n");
+		var configuration = Credentials.Aggregate(string.Empty, (current, keyValuePair)
+			=> current + $$"""
+				credentials "{{keyValuePair.Key}}" {
+					token = "{{keyValuePair.Value}}"
+				}
+
+				""");
 
 		if (configuration == string.Empty) return false;
 

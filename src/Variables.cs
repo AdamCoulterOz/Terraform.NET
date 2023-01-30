@@ -5,7 +5,7 @@ namespace TF;
 public class Variables
 {
 	public Variables()
-        => VariableDictionary = new Dictionary<string, object>();
+		=> VariableDictionary = new Dictionary<string, object>();
 
 	public Dictionary<string, object> VariableDictionary { get; set; }
 
