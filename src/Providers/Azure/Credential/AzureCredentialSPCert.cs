@@ -3,7 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using Azure.Core;
 using Azure.Identity;
 
-namespace TF.Credentials.Azure;
+namespace TF.Providers.Azure.Credential;
 
 /// <summary>
 ///     Azure AD Application Identity Certificate Credential

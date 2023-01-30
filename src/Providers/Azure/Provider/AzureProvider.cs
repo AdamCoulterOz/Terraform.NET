@@ -1,6 +1,6 @@
-using TF.Credentials.Azure;
+using TF.Providers.Azure.Credential;
 
-namespace TF.Extensions.Azure.Provider;
+namespace TF.Providers.Azure.Provider;
 public class AzureProvider : TF.Provider
 {
 	public AzureProvider(Guid subscriptionId, AzureCredential credential) : base(credential)

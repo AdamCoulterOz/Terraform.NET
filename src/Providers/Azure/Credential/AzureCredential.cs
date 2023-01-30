@@ -1,7 +1,7 @@
 using Azure.Core;
 
-namespace TF.Credentials.Azure;
-public abstract class AzureCredential : Credential
+namespace TF.Providers.Azure.Credential;
+public abstract class AzureCredential : TF.Credential
 {
 	public AzureCredential(Guid tenantId, Guid? clientId = null, Guid? subscriptionId = null)
 	{

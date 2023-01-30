@@ -1,4 +1,4 @@
-namespace TF.Credentials.MySql;
+namespace TF.Providers.MySql.Credential;
 
 public class MySqlCredentialBasic : MySqlCredential
 {

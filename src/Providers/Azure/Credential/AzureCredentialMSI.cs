@@ -1,7 +1,7 @@
 using Azure.Core;
 using Azure.Identity;
 
-namespace TF.Credentials.Azure;
+namespace TF.Providers.Azure.Credential;
 
 /// <summary>
 ///     Azure Managed Identity Credential, generates credential from execution context
@@ -21,7 +21,8 @@ public class AzureCredentialMSI : AzureCredential
 		MsiEndpoint = msiEndpoint;
 	}
 
-	[Terraform("use_msi", "ARM_USE_MSI")] public bool UseMsi => true;
+	[Terraform("use_msi", "ARM_USE_MSI")]
+	public static bool UseMsi => true;
 
 	[Terraform("msi_endpoint", "ARM_MSI_ENDPOINT")]
 	public Uri? MsiEndpoint { get; init; }

@@ -1,7 +1,6 @@
-using TF;
-using TF.Credentials.MySql;
+using TF.Providers.MySql.Credential;
 
-namespace TF.Extensions.MySql.Provider;
+namespace TF.Providers.MySql.Provider;
 public class MySqlProvider : TF.Provider
 {
 	private readonly Uri _server;
