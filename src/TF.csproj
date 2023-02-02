@@ -30,7 +30,6 @@
     <PackageReference Include="Azure.Identity" Version="1.*" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.*" />
     <PackageReference Include="CliWrap" Version="3.*" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.*" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.*" />
   </ItemGroup>
 

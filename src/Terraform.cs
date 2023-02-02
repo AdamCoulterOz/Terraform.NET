@@ -6,11 +6,11 @@ namespace TF;
 
 public class Terraform
 {
-	public required string CLI { get; init; } = "terraform";
-	public required DirectoryInfo Path { get; init; } = new(".");
-	public required ProviderSet Providers { get; init; } = new();
-	public required IBackend Backend { get; init; } = new LocalBackend();
-	public required Dictionary<string, string> Variables { get; init; } = new();
+	public string CLI { get; init; } = "terraform";
+	public DirectoryInfo Path { get; init; } = new(".");
+	public ProviderSet Providers { get; init; } = new();
+	public IBackend Backend { get; init; } = new LocalBackend();
+	public Dictionary<string, string> Variables { get; init; } = new();
 	public Configuration Configuration { get; init; } = new Configuration();
 	public Stream? Stream { get; set; }
 
