@@ -1,12 +1,15 @@
+using TF.Attributes;
+
 namespace TF.BuiltIn;
 
 /// <summary>
 ///     The local backend stores state on the local filesystem, locks that state using system APIs, and performs operations
 ///     locally.
 /// </summary>
-public class LocalBackend : Backend
+public class LocalBackend : Backend<VoidCredential>
 {
 	public LocalBackend(FileInfo? stateFile = null, DirectoryInfo? workspace = null)
+		: base(new VoidCredential())
 	{
 		StateFile = stateFile;
 		Workspace = workspace;
@@ -17,12 +20,12 @@ public class LocalBackend : Backend
 	/// <summary>
 	///     The path to the tfstate file. This defaults to "terraform.tfstate" relative to the root module by default.
 	/// </summary>
-	[Terraform("path")]
+	[CliNamed("path")]
 	public FileInfo? StateFile { get; }
 
 	/// <summary>
 	///     The path to non-default workspaces.
 	/// </summary>
-	[Terraform("workspace_dir")]
+	[CliNamed("workspace_dir")]
 	public DirectoryInfo? Workspace { get; }
 }

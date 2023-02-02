@@ -1,3 +1,4 @@
+using TF.Attributes;
 using TF.Providers.MySql.Credential;
 
 namespace TF.Providers.MySql.Provider;
@@ -8,13 +9,13 @@ public class MySqlProvider : TF.Provider
 	public MySqlProvider(Uri server, MySqlCredential credential) : base(credential)
 		=> _server = server;
 
-	[Terraform("endpoint", "MYSQL_ENDPOINT")]
+	[CliNamed("MYSQL_ENDPOINT")]
 	public string Endpoint => $"{_server.Host}:{_server.Port}";
 
-	[Terraform("proxy", "ALL_PROXY")]
+	[CliNamed("ALL_PROXY")]
 	public Uri? Proxy { get; set; }
 
-	[Terraform("tls", "MYSQL_TLS_CONFIG", Lower = true)]
+	[CliNamed("MYSQL_TLS_CONFIG")]
 	public bool TLS { get; set; } = false;
 
 	public override string Name => "mysql";

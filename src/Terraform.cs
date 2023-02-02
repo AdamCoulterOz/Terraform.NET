@@ -1,80 +1,80 @@
 using CliWrap;
 using CliWrap.Buffered;
+using TF.BuiltIn;
 
 namespace TF;
 
 public class Terraform //: IDisposable
 {
-	private readonly string _tfPath;
-	public DirectoryInfo RootPath { get; }
-	public Variables Variables { get; set; }
-	public ProviderCollection Providers { get; set; }
-	public Configuration Configuration { get; set; }
-	public Backend Backend { get; set; }
-	public Stream? OutputStream { get; set; }
+	public required string CLI { get; init; } = "terraform";
+	public required DirectoryInfo Path { get; init; } = new(".");
+	public required ProviderCollection Providers { get; init; } = new();
+	public required IBackend Backend { get; init; } = new LocalBackend();
+	public required Dictionary<string, string> Variables { get; init; } = new();
+	public Configuration Configuration { get; init; } = new Configuration();
+	public Stream? Stream { get; set; }
 
-	public Terraform(Backend backend, DirectoryInfo rootPath, string tfPath)
+	public Terraform()
 	{
-		_tfPath = tfPath;
-		Backend = backend;
-		RootPath = rootPath;
-		Variables = new Variables();
-		Providers = new ProviderCollection();
-		Configuration = new Configuration();
-
 		//AppDomain.CurrentDomain.ProcessExit += (object? sender, EventArgs e) => Dispose();
 	}
 
 	// public void Dispose() { if(this.RootPath.Exists) RootPath.Delete(true);  }
 
-	public async Task<TFResult> Init() => await Command("init", withConfiguration: await Configuration.WriteConfigurationAsync(RootPath), withBackendConfig: true);
-	public async Task<TFResult> Refresh() => await Command("refresh", withVars: true);
-	public async Task<TFResult> Validate() => await Command("validate");
-	public async Task<TFResult> Apply() => await Command("apply", withVars: true, autoApprove: true);
-	public async Task<TFResult> Destroy() => await Command("destroy", withVars: true, autoApprove: true);
-	public async Task<TFResult> Plan() => await Command("plan", withVars: true, withDetailedExitCode: true);
+	public async Task<Result> Version()
+		=> await RunCommandAsync(new Commands.Version { });
 
-	private async Task<TFResult> Command(string action, bool autoApprove = false, bool withVars = false,
-		string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false,
-		bool withDetailedExitCode = false)
+	public async Task<Result> Init()
 	{
-		var command = Cli.Wrap(_tfPath)
-			.WithWorkingDirectory(RootPath.FullName);
-		var arguments = new List<string> { action };
-		if (autoApprove) arguments.Add("-auto-approve");
-		if (withDetailedExitCode) arguments.Add("-detailed-exitcode");
-		if (asJson) arguments.Add("-json");
-		if (outFile != null) arguments.Add($"-out={outFile}");
-		if (withVars)
+		var init = new Commands.Init { BackendConfigValues = Backend.Parameters };
+		Backend.WriteBackendFile(Path);
+		return await RunCommandAsync(init);
+	}
+
+	public async Task<Result> Validate()
+		=> await RunCommandAsync(new Commands.Validate { });
+
+	public async Task<Result> Refresh()
+		=> await RunCommandAsync(new Commands.Refresh
+		{ Variables = Variables });
+
+	public async Task<Result> Plan()
+		=> await RunCommandAsync(new Commands.Plan
+		{ Variables = Variables });
+
+	public async Task<Result> Apply()
+		=> await RunCommandAsync(new Commands.Apply
+		{ Variables = Variables });
+
+	public async Task<Result> Destroy()
+		=> await RunCommandAsync(new Commands.Apply
 		{
-			var json = Variables.VariableJson;
-			File.WriteAllText(Path.Join(RootPath.FullName, "execute.tfvars.json"), json);
-			arguments.Add("-var-file=\"execute.tfvars.json\"");
-		}
-		if (withBackendConfig)
+			Destroy = true,
+			Variables = Variables
+		});
+
+	public async Task<Result> RunCommandAsync<T>(T action)
+		where T : Commands.Action
+	{
+		var command = Cli.Wrap(CLI)
+			.WithWorkingDirectory(Path.FullName)
+			.WithArguments(action.GetCommand())
+			.WithEnvironmentVariables(Providers.CombinedProviderConfigs)
+			.WithValidation(CommandResultValidation.None);
+
+		if (Stream is not null)
+			command = command.WithStandardOutputPipe(PipeTarget.ToStream(Stream, true))
+							 .WithStandardErrorPipe(PipeTarget.ToStream(Stream, true));
+
+		var result = await command.ExecuteBufferedAsync();
+		return new Result
 		{
-			Backend.WriteBackendFile(RootPath);
-			arguments.AddRange(Backend.Arguments);
-		}
-		command = command.WithArguments(arguments, false);
-		var environmentVariables = Providers.CombinedProviderConfigs;
-		if (withConfiguration)
-			environmentVariables.Add(Configuration.ConfigFileEnvVariable, Configuration.FilePath(RootPath));
-		var envVariables = environmentVariables.ToDictionary(kv => kv.Key, kv => (string?)kv.Value); //this line is redundent, used to fix compiler warning
-		command = command.WithEnvironmentVariables(envVariables);
-
-		if (OutputStream is not null)
-			command = command.WithStandardOutputPipe(PipeTarget.ToStream(OutputStream, true))
-							 .WithStandardErrorPipe(PipeTarget.ToStream(OutputStream, true));
-
-		var cmdResult = await command.WithValidation(CommandResultValidation.None).ExecuteBufferedAsync();
-
-		bool? planHasChanges = withDetailedExitCode && cmdResult.ExitCode == 2 ? true : null;
-		var success = cmdResult.ExitCode == 0 || (planHasChanges.HasValue && planHasChanges.Value);
-
-		return new TFResult(success, cmdResult.StandardOutput, cmdResult.StandardError)
-		{
-			PlanHasChanges = planHasChanges
+			ExitCode = result.ExitCode,
+			Output = result.StandardOutput,
+			Error = result.StandardError,
+			StartTime = result.StartTime,
+			ExitTime = result.ExitTime,
+			Duration = result.RunTime
 		};
 	}
 }

@@ -1,11 +1,10 @@
 using Azure.Core;
 using Azure.Identity;
+using TF.Attributes;
 
 namespace TF.Providers.Azure.Credential;
 
-/// <summary>
-///     Azure AD Application Identity Secret Credential
-/// </summary>
+/// <summary>Azure AD Application Identity Secret Credential</summary>
 public class AzureCredentialSPSecret : AzureCredential
 {
 	/// <param name="subscriptionId">Azure Subscription Id</param>
@@ -18,7 +17,7 @@ public class AzureCredentialSPSecret : AzureCredential
 		ClientSecret = clientSecret;
 	}
 
-	[Terraform("client_secret", "ARM_CLIENT_SECRET")]
+	[CliNamed("ARM_CLIENT_SECRET")]
 	public string ClientSecret { get; set; }
 
 	public override TokenCredential TokenCredential

@@ -1,3 +1,5 @@
+using TF.Attributes;
+
 namespace TF.Providers.MySql.Credential;
 
 public class MySqlCredentialBasic : MySqlCredential
@@ -8,10 +10,10 @@ public class MySqlCredentialBasic : MySqlCredential
 		Password = password;
 	}
 
-	[Terraform("username", "MYSQL_USERNAME")]
+	[CliNamed("MYSQL_USERNAME")]
 	public string Username { get; init; }
 
-	[Terraform("password", "MYSQL_PASSWORD")]
+	[CliNamed("MYSQL_PASSWORD")]
 	public string Password { get; init; }
 
 }

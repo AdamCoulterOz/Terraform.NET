@@ -2,6 +2,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Azure.Core;
 using Azure.Identity;
+using TF.Attributes;
 
 namespace TF.Providers.Azure.Credential;
 
@@ -19,11 +20,11 @@ public class AzureCredentialSPCert : AzureCredential
 	/// <param name="clientId">Azure AD Application Client Id</param>
 	/// <param name="certificatePath">File path to X509 certificate</param>
 	/// <param name="certificatePassword">Certificate password</param>
-	public AzureCredentialSPCert(Guid tenantId, Guid clientId, string certificatePath,
+	public AzureCredentialSPCert(Guid tenantId, Guid clientId, FileInfo certificatePath,
 		SecureString certificatePassword, Guid? subscriptionId = null)
 		: base(tenantId, clientId, subscriptionId)
 	{
-		CertificatePath = new FileInfo(certificatePath);
+		CertificatePath = certificatePath;
 		if (!CertificatePath.Exists)
 			throw new Exception($"Certificate at path: '{CertificatePath}' cannot be found");
 		CertificatePassword = certificatePassword;
@@ -34,10 +35,10 @@ public class AzureCredentialSPCert : AzureCredential
 	private X509Certificate2 Certificate
 		=> new(CertificatePath.FullName, CertificatePassword);
 
-	[Terraform("client_certificate_path", "ARM_CLIENT_CERTIFICATE_PATH")]
+	[CliNamed("ARM_CLIENT_CERTIFICATE_PATH")]
 	public FileInfo CertificatePath { get; }
 
-	[Terraform("client_certificate_password", "ARM_CLIENT_CERTIFICATE_PASSWORD")]
+	[CliNamed("ARM_CLIENT_CERTIFICATE_PASSWORD")]
 	public SecureString CertificatePassword { get; }
 
 	public override TokenCredential TokenCredential

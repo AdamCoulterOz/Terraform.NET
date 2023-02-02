@@ -1,5 +1,6 @@
 using Azure.Core;
 using Azure.Identity;
+using TF.Attributes;
 
 namespace TF.Providers.Azure.Credential;
 
@@ -13,7 +14,7 @@ namespace TF.Providers.Azure.Credential;
 public class AzureCredentialMSI : AzureCredential
 {
 	/// <param name="tenantId">Azure organisation (tenant) Id</param>
-	/// <param name="clientId">Specify to use a user assigned managed identity</param>
+	/// <param name="clientId">Override the system assigned identity (if applicable) with a user assigned managed identity</param>
 	/// <param name="msiEndpoint">Only required where the MSI endpoint is not standard (e.g. Azure Function App)</param>
 	public AzureCredentialMSI(Guid tenantId, Guid? clientId = null, Uri? msiEndpoint = null)
 		: base(tenantId, clientId)
@@ -21,10 +22,10 @@ public class AzureCredentialMSI : AzureCredential
 		MsiEndpoint = msiEndpoint;
 	}
 
-	[Terraform("use_msi", "ARM_USE_MSI")]
+	[CliNamed("ARM_USE_MSI")]
 	public static bool UseMsi => true;
 
-	[Terraform("msi_endpoint", "ARM_MSI_ENDPOINT")]
+	[CliNamed("ARM_MSI_ENDPOINT")]
 	public Uri? MsiEndpoint { get; init; }
 
 	public override TokenCredential TokenCredential

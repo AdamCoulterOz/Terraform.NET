@@ -12,11 +12,31 @@ public class Plan : PlanApply
 {
 	protected override string Command => "plan";
 
-	/// <summary>Return a detailed exit code when the command exits. This will change the meaning of exit codes to:  0 - Succeeded, diff is empty (no changes), 1 - Errored, 2 - Succeeded, there is a diff.</summary>
+	/// <summary>Return a detailed exit code when the command exits.</summary>
+	/// <remarks>
+	/// This will change the meaning of exit codes to:
+	/// <list type="bullet">
+	///   <item>`0` - Succeeded (no changes)</item>
+	///   <item>`1` - Errored</item>
+	///   <item>`2` - Succeeded (has changes)</item>
+	/// </list>
+	/// </remarks>
 	[CliOption("detailed-exitcode")]
-	public bool? DetailedExitCode { get; set; }
+	public static bool DetailedExitCode => true;
 
-	/// <summary>Write a plan file to the given path. This can be used as input to the "apply" command.</summary>
+	/// <summary>Write a plan file to the given path.</summary>
+	/// <remarks>This can be used as input to the "apply" command.</remarks>
 	[CliOption("out")]
-	public string? Out { get; set; }
+	public FileInfo? Out { get; set; }
+
+	public static void ProcessResult(TF.Result result)
+	{
+		(bool Success, bool? Changes) plan = result.ExitCode switch
+		{
+			0 => (true, false),
+			1 => (false, null),
+			2 => (true, true),
+			_ => throw new ArgumentOutOfRangeException()
+		};
+	}
 }

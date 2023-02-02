@@ -1,23 +1,25 @@
+using TF.Attributes;
+using TF.Extensions;
+
 namespace TF;
-public abstract class Backend
+public abstract class Backend<T> : IBackend
+	where T : Credential
 {
 	protected abstract string Name { get; }
-	protected Credential? Credential { get; set; }
+	protected T Credential { get; init; }
 
-	public Backend(Credential? credential = null)
+	public Backend(T credential)
 		=> Credential = credential;
 
-	public IEnumerable<string> Arguments
-		=> this.TFKeys().AppendDictionary(Credential.TFKeys()).Select(keyValue => $"""-backend-config="{keyValue.Key}={keyValue.Value}" """);
+	public IDictionary<string, string> Parameters => CliNamedAttribute.BuildVariables(this);
 
 	public void WriteBackendFile(DirectoryInfo workingFolder)
 	{
-		var backendFile = new FileInfo(Path.Join(workingFolder.FullName, "_backend.tf"));
-		var content = $$"""
+		var backendFile = new FileInfo(Path.Combine(workingFolder.FullName, "_backend.tf"));
+		backendFile.WriteAllText($$"""
 			terraform {
 				backend "{{Name}}" {}
 			}
-			""";
-		File.WriteAllText(backendFile.FullName, content);
+			""");
 	}
 }

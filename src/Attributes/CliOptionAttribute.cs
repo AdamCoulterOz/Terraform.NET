@@ -2,10 +2,12 @@ using System.Reflection;
 
 namespace TF.Attributes;
 
+public interface ICliAttributed { }
+
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public abstract class CliAttribute : Attribute { }
 
-public abstract class CliNamedAttribute : CliAttribute
+public class CliNamedAttribute : CliAttribute
 {
 	public string Name { get; }
 
@@ -14,35 +16,48 @@ public abstract class CliNamedAttribute : CliAttribute
 		Name = name;
 	}
 
-	public static string BuildArguments<T>(Commands.Action action)
+	public static string BuildArguments<T>(ICliAttributed item)
 				where T : CliNamedAttribute
 	{
+		var variables = BuildVariables<T>(item);
 		var arguments = new List<string>();
-		var properties = action.GetType().GetProperties();
+		foreach (var (var, value) in variables)
+		{
+			arguments.Add(value switch
+			{
+				ICollection<string> c => string.Join(" ", c.Select(i => $"-{var}={i}")),
+				bool b => $"-{var}={b.ToString().ToLowerInvariant()}",
+				_ => $"-{var}={value}"
+			});
+		}
+		return string.Join(" ", arguments);
+	}
+
+	public static Dictionary<string, object> BuildVariables<T>(ICliAttributed item)
+				where T : CliNamedAttribute
+	{
+		var variables = new Dictionary<string, object>();
+		var properties = item.GetType().GetProperties();
 
 		foreach (var property in properties)
 		{
 			var attr = property.GetCustomAttribute<T>();
-			var value = property.GetValue(action);
+			var value = property.GetValue(item);
 			if (attr == null || value == null) continue;
-
-			arguments.Add(value switch
-			{
-				ICollection<string> c => string.Join(" ", c.Select(i => $"-{attr.Name}={i}")),
-				bool b => $"-{attr.Name}={b.ToString().ToLowerInvariant()}",
-				_ => $"-{attr.Name}={value}"
-			});
+			variables.Add(attr.Name, value);
 		}
-
-		return string.Join(" ", arguments);
+		return variables;
 	}
+
+	public static Dictionary<string, string> BuildVariables(ICliAttributed item)
+		=> BuildVariables<CliNamedAttribute>(item).ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString()!);
 }
 
 public class CliOptionAttribute : CliNamedAttribute
 {
 	public CliOptionAttribute(string name) : base(name) { }
 
-	public static string BuildArguments(Commands.Action actions)
+	public static string BuildArguments(ICliAttributed actions)
 		=> BuildArguments<CliOptionAttribute>(actions);
 }
 
@@ -50,13 +65,13 @@ public class CliGlobalOptionAttribute : CliNamedAttribute
 {
 	public CliGlobalOptionAttribute(string name) : base(name) { }
 
-	public static string BuildArguments(Commands.Action actions)
+	public static string BuildArguments(ICliAttributed actions)
 		=> BuildArguments<CliGlobalOptionAttribute>(actions);
 }
 
 public class CliArgumentAttribute : CliAttribute
 {
-	public static string BuildArguments(Commands.Action action)
+	public static string BuildArguments(ICliAttributed action)
 	{
 		var property = action.GetType().GetProperties()
 			.FirstOrDefault(p => p.GetCustomAttribute<CliArgumentAttribute>() != null);

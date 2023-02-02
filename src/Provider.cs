@@ -1,9 +1,12 @@
+using TF.Attributes;
+
 namespace TF;
-public abstract class Provider
+public abstract class Provider : ICliAttributed
 {
 	protected Provider(Credential credential) => Credential = credential;
 	public Credential Credential { get; }
 	public Dictionary<string, string> GetConfig()
-		=> Credential.EnvKeys().AppendDictionary(this.EnvKeys());
+		=> CliNamedAttribute.BuildVariables(Credential)
+							.AppendDictionary(CliNamedAttribute.BuildVariables(this));
 	public abstract string Name { get; }
 }

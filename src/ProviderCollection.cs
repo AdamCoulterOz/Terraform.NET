@@ -18,10 +18,10 @@ public class ProviderCollection
 		SetAliasInternal(alias, provider);
 	}
 
-	internal Dictionary<string, string> CombinedProviderConfigs
+	internal Dictionary<string, string?> CombinedProviderConfigs
 		=> Aliases.Select(p => p.Value.GetConfig())
 				  .SelectMany(c => c)
-				  .ToDictionary(pair => pair.Key, pair => pair.Value);
+				  .ToDictionary(pair => pair.Key, pair => (string?)pair.Value);
 
 	private void SetAliasInternal(string alias, Provider provider)
 	{

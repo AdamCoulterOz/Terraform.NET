@@ -1,6 +1,7 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using TF.Attributes;
 using TF.Providers.Azure.Credential;
 
 namespace TF.Providers.Azure.Backend;
@@ -12,8 +13,10 @@ namespace TF.Providers.Azure.Backend;
 /// <remarks>
 ///     Resource Path: Subscription/ResourceGroup/StorageAccount/Container/Blob
 /// </remarks>
-public class AzureBackend : TF.Backend
+public class AzureBackend : Backend<AzureCredential>
 {
+	protected override string Name => "azurerm";
+
 	public AzureBackend(AzureCredential credential, Guid tenantId, Guid subscriptionId,
 		string resourceGroupName, string storageAccountName, string containerName, string blobName) : base(credential)
 	{
@@ -61,23 +64,26 @@ public class AzureBackend : TF.Backend
 
 	private void ValidateCreateContainer()
 	{
-		var accountUri =
-			new Uri($"https://{StorageAccountName.ToLower()}.blob.core.windows.net/{ContainerName.ToLower()}");
-		var container = new BlobContainerClient(accountUri, ((AzureCredential)Credential!).TokenCredential);
+		var accountUri = new Uri($"https://{StorageAccountName.ToLowerInvariant()}.blob.core.windows.net/{ContainerName.ToLowerInvariant()}");
+		var container = new BlobContainerClient(accountUri, Credential!.TokenCredential);
 		container.CreateIfNotExists(PublicAccessType.None);
 	}
 
-	protected override string Name => "azurerm";
+	[CliNamed("resource_group_name")]
+	public required string ResourceGroupName { get; init; }
 
-	[Terraform("resource_group_name")] public string ResourceGroupName { get; }
+	[CliNamed("storage_account_name")]
+	public required string StorageAccountName { get; init; }
 
-	[Terraform("storage_account_name")] public string StorageAccountName { get; }
+	[CliNamed("subscription_id")]
+	public required Guid SubscriptionId { get; init; }
 
-	[Terraform("subscription_id")] public Guid SubscriptionId { get; }
+	[CliNamed("tenant_id")]
+	public required Guid TenantId { get; init; }
 
-	[Terraform("tenant_id")] public Guid TenantId { get; }
+	[CliNamed("container_name")]
+	public required string ContainerName { get; init; }
 
-	[Terraform("container_name")] public string ContainerName { get; }
-
-	[Terraform("key")] public string BlobName { get; }
+	[CliNamed("key")]
+	public required string BlobName { get; init; }
 }

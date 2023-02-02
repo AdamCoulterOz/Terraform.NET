@@ -2,7 +2,7 @@ using TF.Attributes;
 
 namespace TF.Commands;
 
-public abstract class Action
+public abstract class Action : ICliAttributed
 {
 	protected abstract string Command { get; }
 	public string GetCommand() => $"{CliGlobalOptionAttribute.BuildArguments(this)} {Command} {CliOptionAttribute.BuildArguments(this)} {CliArgumentAttribute.BuildArguments(this)}".Trim();
