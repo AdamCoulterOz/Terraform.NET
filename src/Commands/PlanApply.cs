@@ -38,11 +38,11 @@ public abstract class PlanApply : Main
 	[CliOption("target")]
 	public ICollection<string> Targets { get; set; } = new List<string>();
 
-	[CliOption("var")]
-	public ICollection<string> Vars => Variables.Select(i => $"'{i.Key}={i.Value}'").ToList();
-
 	/// <summary>Set a values for the input variables in the root module of the configuration.</summary>
 	public IDictionary<string, string> Variables { get; set; } = new Dictionary<string, string>();
+
+	[CliOption("var")]
+	protected ICollection<string> Vars => Variables.Select(i => $"'{i.Key}={i.Value}'").ToList();
 
 	/// <summary>Load variable values from the given files (in addition to the default files terraform.tfvars and *.auto.tfvars).</summary>
 	[CliOption("var-file")]

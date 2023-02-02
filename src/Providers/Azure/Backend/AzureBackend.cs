@@ -27,7 +27,7 @@ public class AzureBackend : Backend<AzureCredential>
 		StorageAccountName = storageAccountName;
 		ContainerName = containerName;
 		BlobName = blobName;
-		ValidateCreateContainer();
+		CreateContainerIfNotExists();
 	}
 
 	/// <summary>
@@ -59,13 +59,13 @@ public class AzureBackend : Backend<AzureCredential>
 		StorageAccountName = storageAccount.Name;
 		ContainerName = containerName;
 		BlobName = blobName;
-		ValidateCreateContainer();
+		CreateContainerIfNotExists();
 	}
 
-	private void ValidateCreateContainer()
+	private void CreateContainerIfNotExists()
 	{
 		var accountUri = new Uri($"https://{StorageAccountName.ToLowerInvariant()}.blob.core.windows.net/{ContainerName.ToLowerInvariant()}");
-		var container = new BlobContainerClient(accountUri, Credential!.TokenCredential);
+		var container = new BlobContainerClient(accountUri, Credential.TokenCredential);
 		container.CreateIfNotExists(PublicAccessType.None);
 	}
 

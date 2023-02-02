@@ -10,10 +10,11 @@ public class ResourceChange
 	///     Resource instance to change
 	/// </summary>
 	[JsonPropertyName("address")]
-	public string ResourceAddress { get; set; } = null!;
+	public required string ResourceAddress { get; init; }
 
 
-	[JsonPropertyName("mode")] public Mode Mode { get; set; }
+	[JsonPropertyName("mode")]
+	public Mode Mode { get; set; }
 
 	/// <summary>
 	///     If set, indicates the resource being superceeded
@@ -25,7 +26,7 @@ public class ResourceChange
 	///     Change to be applied
 	/// </summary>
 	[JsonPropertyName("change")]
-	public Change Change { get; set; } = null!;
+	public required Change Change { get; init; }
 
 	/// <summary>
 	///     Special reason for why the resource needed to be replaced (if applicable)

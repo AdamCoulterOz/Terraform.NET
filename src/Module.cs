@@ -4,17 +4,17 @@ namespace TF;
 public class Module
 {
 	[JsonPropertyName("id")]
-	public string Id { get; set; } = null!;
+	public required string Id { get; set; }
 
 	[JsonPropertyName("name")]
-	public string Name { get; set; } = null!;
+	public required string Name { get; set; }
 
 	[JsonPropertyName("namespace")]
-	public string Namespace { get; set; } = null!;
+	public required string Namespace { get; set; }
 
 	[JsonPropertyName("provider")]
-	public string Provider { get; set; } = null!;
+	public required string Provider { get; set; }
 
 	[JsonPropertyName("latest_version")]
-	public string LatestVersion { get; set; } = null!;
+	public required string LatestVersion { get; set; }
 }

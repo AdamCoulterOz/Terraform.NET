@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 namespace TF.Model;
 public class Plan
 {
-	[JsonPropertyName("format_version")] public string FormatVersion { get; set; } = null!;
+	[JsonPropertyName("format_version")]
+	public required string FormatVersion { get; init; }
 
 	//[JsonPropertyName("prior_state")]
 	//public State PriorState;
@@ -19,18 +20,18 @@ public class Plan
 	///     Key is the variable name
 	/// </summary>
 	[JsonPropertyName("variables")]
-	public Dictionary<string, Variable> Variables { get; set; } = null!;
+	public required Dictionary<string, Variable> Variables { get; init; }
 
 	/// <summary>
 	///     Collection of resource changes to move from existing to target state
 	/// </summary>
 	[JsonPropertyName("resource_changes")]
-	public List<ResourceChange> ResourceChanges { get; set; } = null!;
+	public required List<ResourceChange> ResourceChanges { get; init; }
 
 	/// <summary>
 	///     Planned changes to the output values
 	///     Key is the output name
 	/// </summary>
 	[JsonPropertyName("output_changes")]
-	public Dictionary<string, Change> OutputChanges { get; set; } = null!;
+	public required Dictionary<string, Change> OutputChanges { get; init; }
 }

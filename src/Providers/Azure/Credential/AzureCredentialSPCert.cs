@@ -26,10 +26,10 @@ public class AzureCredentialSPCert : AzureCredential
 	{
 		CertificatePath = certificatePath;
 		if (!CertificatePath.Exists)
-			throw new Exception($"Certificate at path: '{CertificatePath}' cannot be found");
+			throw new ArgumentException($"Certificate at path: '{CertificatePath}' cannot be found", nameof(certificatePath));
 		CertificatePassword = certificatePassword;
 		if (!Certificate.Verify())
-			throw new Exception($"Certificate cannot be verified");
+			throw new ArgumentException($"Certificate validation failed");
 	}
 
 	private X509Certificate2 Certificate
@@ -41,6 +41,6 @@ public class AzureCredentialSPCert : AzureCredential
 	[CliNamed("ARM_CLIENT_CERTIFICATE_PASSWORD")]
 	public SecureString CertificatePassword { get; }
 
-	public override TokenCredential TokenCredential
+	internal override TokenCredential TokenCredential
 		=> new ClientCertificateCredential(TenantId.ToString(), ClientId.ToString(), Certificate);
 }

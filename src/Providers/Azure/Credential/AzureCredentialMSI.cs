@@ -23,11 +23,11 @@ public class AzureCredentialMSI : AzureCredential
 	}
 
 	[CliNamed("ARM_USE_MSI")]
-	public static bool UseMsi => true;
+	protected static bool UseMsi => true;
 
 	[CliNamed("ARM_MSI_ENDPOINT")]
 	public Uri? MsiEndpoint { get; init; }
 
-	public override TokenCredential TokenCredential
+	internal override TokenCredential TokenCredential
 		=> new ManagedIdentityCredential(ClientId?.ToString());
 }

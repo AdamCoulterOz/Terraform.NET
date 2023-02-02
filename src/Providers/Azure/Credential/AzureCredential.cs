@@ -20,5 +20,5 @@ public abstract class AzureCredential : TF.Credential
 	[CliNamed("ARM_SUBSCRIPTION_ID")]
 	public Guid? SubscriptionId { get; init; }
 
-	public abstract TokenCredential TokenCredential { get; }
+	internal abstract TokenCredential TokenCredential { get; }
 }

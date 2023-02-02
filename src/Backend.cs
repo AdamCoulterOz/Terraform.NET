@@ -2,6 +2,13 @@ using TF.Attributes;
 using TF.Extensions;
 
 namespace TF;
+
+public interface IBackend : ICliAttributed
+{
+	internal IDictionary<string, string> Parameters { get; }
+	void WriteBackendFile(DirectoryInfo path);
+}
+
 public abstract class Backend<T> : IBackend
 	where T : Credential
 {
@@ -11,7 +18,7 @@ public abstract class Backend<T> : IBackend
 	public Backend(T credential)
 		=> Credential = credential;
 
-	public IDictionary<string, string> Parameters => CliNamedAttribute.BuildVariables(this);
+	IDictionary<string, string> IBackend.Parameters => CliNamedAttribute.BuildVariables(this);
 
 	public void WriteBackendFile(DirectoryInfo workingFolder)
 	{

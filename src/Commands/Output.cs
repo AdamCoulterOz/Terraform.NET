@@ -19,7 +19,7 @@ public class Output : Action
 	[CliOption("state")]
 	public string? State { get; set; }
 
-	/// <summary>Produce output in a machine-readable JSON format.</summary>
+	/// <summary>Always produce output in a machine-readable JSON format.</summary>
 	[CliOption("json")]
-	public static bool Json => true;
+	protected static bool Json => true;
 }

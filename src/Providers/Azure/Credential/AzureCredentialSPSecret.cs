@@ -20,6 +20,6 @@ public class AzureCredentialSPSecret : AzureCredential
 	[CliNamed("ARM_CLIENT_SECRET")]
 	public string ClientSecret { get; set; }
 
-	public override TokenCredential TokenCredential
-		=> new ClientSecretCredential(TenantId.ToString(), ClientId.ToString(), ClientSecret.ToString());
+	internal override TokenCredential TokenCredential
+		=> new ClientSecretCredential(TenantId.ToString(), ClientId.ToString(), ClientSecret);
 }

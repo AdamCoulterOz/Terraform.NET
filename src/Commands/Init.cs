@@ -11,7 +11,7 @@ public class Init : Main
 	public bool? ReinitBackend { get; set; }
 
 	[CliOption("backend-config")]
-	public ICollection<string> CalcBackendConfig => BackendConfigValues
+	protected ICollection<string> CalcBackendConfig => BackendConfigValues
 		.Select(i => $"\"{i.Key}={i.Value}\"")
 		.Concat(BackendConfigFiles.Select(i => i.FullName))
 		.ToList();
@@ -41,7 +41,7 @@ public class Init : Main
 	public bool? IgnoreRemoteVersion { get; set; }
 
 	[CliOption("lockfile")]
-	public string? CalcLockFile => LockFileMode?.ToString().ToLowerInvariant();
+	protected string? CalcLockFile => LockFileMode?.ToString().ToLowerInvariant();
 
 	/// <summary>Set a dependency lock file mode. Currently, only "readonly" is valid.</summary>
 	public LockFileModes? LockFileMode { get; set; }

@@ -15,9 +15,9 @@ public class Apply : PlanApply
 	[CliArgument]
 	public FileInfo? PlanFile { get; set; }
 
-	/// <summary>Skip interactive approval before applying.</summary>
+	/// <summary>Will always skip interactive approval as this is a programatic interface wrapper</summary>
 	[CliOption("auto-approve")]
-	public static bool AutoApprove => true;
+	protected static bool AutoApprove => true;
 
 	/// <summary>Path to backup the existing state file before modifying. Defaults to the "-state-out" path with ".backup" extension. Set to "-" to disable backup.</summary>
 	[CliOption("backup")]

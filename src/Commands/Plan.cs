@@ -22,21 +22,19 @@ public class Plan : PlanApply
 	/// </list>
 	/// </remarks>
 	[CliOption("detailed-exitcode")]
-	public static bool DetailedExitCode => true;
+	protected static bool DetailedExitCode => true;
 
 	/// <summary>Write a plan file to the given path.</summary>
 	/// <remarks>This can be used as input to the "apply" command.</remarks>
 	[CliOption("out")]
 	public FileInfo? Out { get; set; }
 
-	public static void ProcessResult(TF.Result result)
-	{
-		(bool Success, bool? Changes) plan = result.ExitCode switch
+	public static (bool Success, bool? Changes) ProcessResult(Result result)
+		=> result.ExitCode switch
 		{
 			0 => (true, false),
 			1 => (false, null),
 			2 => (true, true),
-			_ => throw new ArgumentOutOfRangeException()
+			_ => throw new ArgumentOutOfRangeException(nameof(result.ExitCode), result.ExitCode, "Unexpected exit code")
 		};
-	}
 }

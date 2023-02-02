@@ -4,22 +4,15 @@ using TF.BuiltIn;
 
 namespace TF;
 
-public class Terraform //: IDisposable
+public class Terraform
 {
 	public required string CLI { get; init; } = "terraform";
 	public required DirectoryInfo Path { get; init; } = new(".");
-	public required ProviderCollection Providers { get; init; } = new();
+	public required ProviderSet Providers { get; init; } = new();
 	public required IBackend Backend { get; init; } = new LocalBackend();
 	public required Dictionary<string, string> Variables { get; init; } = new();
 	public Configuration Configuration { get; init; } = new Configuration();
 	public Stream? Stream { get; set; }
-
-	public Terraform()
-	{
-		//AppDomain.CurrentDomain.ProcessExit += (object? sender, EventArgs e) => Dispose();
-	}
-
-	// public void Dispose() { if(this.RootPath.Exists) RootPath.Delete(true);  }
 
 	public async Task<Result> Version()
 		=> await RunCommandAsync(new Commands.Version { });

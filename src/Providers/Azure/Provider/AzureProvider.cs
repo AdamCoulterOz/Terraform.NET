@@ -10,5 +10,5 @@ public class AzureProvider : TF.Provider
 	[CliNamed("ARM_SUBSCRIPTION_ID")]
 	public Guid SubscriptionId { get; }
 
-	public override string Name => "azurerm";
+	protected internal override string Name => "azurerm";
 }

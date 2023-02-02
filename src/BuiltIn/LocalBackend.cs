@@ -8,11 +8,11 @@ namespace TF.BuiltIn;
 /// </summary>
 public class LocalBackend : Backend<VoidCredential>
 {
-	public LocalBackend(FileInfo? stateFile = null, DirectoryInfo? workspace = null)
+	public LocalBackend(FileInfo? stateFile = null, DirectoryInfo? workspaceDir = null)
 		: base(new VoidCredential())
 	{
 		StateFile = stateFile;
-		Workspace = workspace;
+		WorkspaceDir = workspaceDir;
 	}
 
 	protected override string Name => "local";
@@ -27,5 +27,5 @@ public class LocalBackend : Backend<VoidCredential>
 	///     The path to non-default workspaces.
 	/// </summary>
 	[CliNamed("workspace_dir")]
-	public DirectoryInfo? Workspace { get; }
+	public DirectoryInfo? WorkspaceDir { get; }
 }

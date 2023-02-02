@@ -6,7 +6,7 @@ public abstract class Main : Action
 {
 	/// <summary>Note that some actions may require interactive prompts and will error if this is disabled.</summary>
 	[CliOption("input")]
-	public static bool InteractiveInput => false;
+	internal static bool InteractiveInput => false;
 
 	/// <summary>Default: `true`. Disabling the lock is dangerous if others might concurrently run commands against the same workspace.</summary>
 	[CliOption("lock")]

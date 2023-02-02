@@ -10,7 +10,7 @@ public class MySqlProvider : TF.Provider
 		=> _server = server;
 
 	[CliNamed("MYSQL_ENDPOINT")]
-	public string Endpoint => $"{_server.Host}:{_server.Port}";
+	protected string Endpoint => $"{_server.Host}:{_server.Port}";
 
 	[CliNamed("ALL_PROXY")]
 	public Uri? Proxy { get; set; }
@@ -18,5 +18,5 @@ public class MySqlProvider : TF.Provider
 	[CliNamed("MYSQL_TLS_CONFIG")]
 	public bool TLS { get; set; } = false;
 
-	public override string Name => "mysql";
+	protected internal override string Name => "mysql";
 }

@@ -1,29 +1,22 @@
 namespace TF;
-public static class DictionaryExtensions
+internal static class DictionaryExtensions
 {
-	public static Dictionary<TKey, TValue> AppendDictionary<TKey, TValue>(
-		this Dictionary<TKey, TValue> dictionary, Dictionary<TKey, TValue>? append)
-		where TKey : notnull
-		where TValue : notnull
+	public static IDictionary<TKey, TValue> Merge<TKey, TValue>(
+		this IDictionary<TKey, TValue> first,
+		IDictionary<TKey, TValue> second,
+		bool overwrite = true)
 	{
-		if (append is null)
-			return dictionary;
-		foreach (KeyValuePair<TKey, TValue> kvp in append)
+		if (second is null) return first;
+		foreach (var item in second)
 		{
-			if (!dictionary.ContainsKey(kvp.Key))
-			{
-				dictionary.Add(kvp.Key, kvp.Value);
-				continue;
-			}
-
-			var leftValue = dictionary[kvp.Key];
-			var rightValue = append[kvp.Key];
-
-			if (leftValue.Equals(rightValue))
-				continue;
-
-			throw new Exception($"Cannot resolve duplicate key {kvp.Key} when merging dictionaries. Left value: {leftValue} Right value: {rightValue}");
+			if (first.TryGetValue(item.Key, out var firstVal)
+				&& !overwrite && !Equals(firstVal, item.Value))
+				throw new ArgumentException($"""
+					Key already exists in dictionary: {item.Key}.
+					Existing Value: {firstVal}, New value: {item.Value}
+					""");
+			first[item.Key] = item.Value;
 		}
-		return dictionary;
+		return first;
 	}
 }
