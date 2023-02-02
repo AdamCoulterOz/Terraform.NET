@@ -1,5 +1,5 @@
-namespace TF;
-internal static class DictionaryExtensions
+namespace TF.Extensions;
+internal static class IEnumerableExtensions
 {
 	public static IDictionary<TKey, TValue> Merge<TKey, TValue>(
 		this IDictionary<TKey, TValue> first,
@@ -19,4 +19,7 @@ internal static class DictionaryExtensions
 		}
 		return first;
 	}
+
+	public static string Join<T>(this IEnumerable<T> source, char separator)
+		=> string.Join(separator, source);
 }
