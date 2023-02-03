@@ -1,4 +1,5 @@
 using TF.Attributes;
+using TF.Model.Validate;
 
 namespace TF.Commands;
 
@@ -15,7 +16,7 @@ namespace TF.Commands;
 ///     <item>To verify configuration in the context of a particular run, use the <see cref="Plan"/> command instead.</item>
 ///   </list>
 /// </remarks>
-public class Validate : Main
+public sealed class Validate : Main<Validation>
 {
 	protected override string Command => "validate";
 

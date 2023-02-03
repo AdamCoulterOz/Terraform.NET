@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 
 namespace TF.Model;
-public class Plan
+public class Plan : IOutput
 {
 	[JsonPropertyName("format_version")]
 	public required string FormatVersion { get; init; }

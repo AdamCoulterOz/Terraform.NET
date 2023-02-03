@@ -1,10 +1,8 @@
-namespace TF;
+namespace TF.Results;
 
-public class Result
+public abstract class Result
 {
 	public required string Output { get; init; }
-	public required string Error { get; init; }
-	public required int ExitCode { get; init; }
 	public required DateTimeOffset StartTime { get; init; }
 	public required DateTimeOffset ExitTime { get; init; }
 	public required TimeSpan Duration { get; init; }

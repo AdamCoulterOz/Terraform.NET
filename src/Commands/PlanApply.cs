@@ -2,7 +2,7 @@ using TF.Attributes;
 
 namespace TF.Commands;
 
-public abstract class PlanApply : Main
+public abstract class PlanApply : Main<Model.Plan>
 {
 	/// <summary>If Terraform produces any warnings that are not accompanied by errors, shows them in a more compact form that includes only the summary messages.</summary>
 	[CliOption("compact-warnings")]

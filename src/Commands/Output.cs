@@ -1,9 +1,18 @@
 using TF.Attributes;
+using TF.Model;
 
 namespace TF.Commands;
 
-/// <summary>Read module outputs.</summary>
-public class Output : Action
+/// <summary>
+/// 	Read module outputs.
+/// </summary>
+/// <remarks>
+/// 	Please implement <see cref="IOutput"/> with the structure of your outputs
+/// 	and pass as the <see cref="T"/> argument for automatic deserialisation.
+/// 	The deserilisation is done using <see cref="System.Text.Json"/>.
+/// </remarks>
+public sealed class Output<T> : Action<T>
+	where T : IOutput
 {
 	protected override string Command => "output";
 

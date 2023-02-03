@@ -6,7 +6,7 @@ namespace TF.Commands;
 /// This will not modify your infrastructure, but it can modify your state file to update metadata.
 /// This metadata might cause new changes to occur when you generate a plan or call apply next.
 /// </summary>
-public class Refresh : PlanApply
+public sealed class Refresh : PlanApply
 {
 	protected override string Command => "refresh";
 }

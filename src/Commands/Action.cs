@@ -1,8 +1,11 @@
+using System.Text.Json;
 using TF.Attributes;
+using TF.Model;
 
 namespace TF.Commands;
 
-public abstract class Action : ICliAttributed
+public abstract class Action<T> : ICliAttributed
+	where T : IOutput
 {
 	protected abstract string Command { get; }
 	public string GetCommand() => $"{CliGlobalOptionAttribute.BuildArguments(this)} {Command} {CliOptionAttribute.BuildArguments(this)} {CliArgumentAttribute.BuildArguments(this)}".Trim();
@@ -16,6 +19,9 @@ public abstract class Action : ICliAttributed
 	public bool? Help { get; set; }
 
 	/// <summary>Remove color formatting in console command output.</summary>
-	[CliOption("no-color")]
+	// [CliOption("no-color")]
 	public bool? NoColor { get; set; } = true;
+
+	public virtual T Parse(string output)
+		=> JsonSerializer.Deserialize<T>(output)!;
 }

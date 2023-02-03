@@ -8,7 +8,7 @@ namespace TF.Commands;
 /// <remarks>
 ///   You can optionally save the plan to a file, which you can then pass to the "apply" command to perform exactly the actions described in the plan.
 /// </remarks>
-public class Plan : PlanApply
+public sealed class Plan : PlanApply
 {
 	protected override string Command => "plan";
 
@@ -22,19 +22,10 @@ public class Plan : PlanApply
 	/// </list>
 	/// </remarks>
 	[CliOption("detailed-exitcode")]
-	protected static bool DetailedExitCode => true;
+	protected static bool DetailedExitCode => false;
 
 	/// <summary>Write a plan file to the given path.</summary>
 	/// <remarks>This can be used as input to the "apply" command.</remarks>
 	[CliOption("out")]
 	public FileInfo? Out { get; set; }
-
-	public static (bool Success, bool? Changes) ProcessResult(Result result)
-		=> result.ExitCode switch
-		{
-			0 => (true, false),
-			1 => (false, null),
-			2 => (true, true),
-			_ => throw new ArgumentOutOfRangeException(nameof(result.ExitCode), result.ExitCode, "Unexpected exit code")
-		};
 }

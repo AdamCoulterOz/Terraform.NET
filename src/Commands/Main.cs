@@ -1,8 +1,10 @@
 using TF.Attributes;
+using TF.Model;
 
 namespace TF.Commands;
 
-public abstract class Main : Action
+public abstract class Main<T> : Action<T>
+	where T : IOutput
 {
 	/// <summary>Note that some actions may require interactive prompts and will error if this is disabled.</summary>
 	[CliOption("input")]

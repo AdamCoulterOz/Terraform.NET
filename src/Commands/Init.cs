@@ -1,8 +1,9 @@
 using TF.Attributes;
+using TF.Model;
 
 namespace TF.Commands;
 
-public class Init : Main
+public sealed class Init : Main<Initialisation>
 {
 	protected override string Command => "init";
 
@@ -62,4 +63,43 @@ public class Init : Main
 	/// <summary>Install the latest module and provider versions allowed within configured constraints, overriding the default behavior of selecting precisely the version recorded in the dependency lock file.</summary>
 	[CliOption("upgrade")]
 	public bool? Upgrade { get; set; }
+
+	public override Initialisation Parse(string output)
+	{
+		// parse the result.Output for details about provider plugins
+		// example is below
+		return new() { Providers = new Dictionary<string, string>() };
+
+		// EXAMPLE OUTPUT FROM INIT:
+
+		// Initializing modules...
+		//
+		// Initializing the backend...
+		//
+		// Initializing provider plugins...
+		// - Reusing previous version of hashicorp/random from the dependency lock file
+		// - Reusing previous version of hashicorp/azuread from the dependency lock file
+		// - Reusing previous version of adamcoulteroz/azurehelpers from the dependency lock file
+		// - Reusing previous version of azure/azapi from the dependency lock file
+		// - Reusing previous version of hashicorp/null from the dependency lock file
+		// - Reusing previous version of hashicorp/azurerm from the dependency lock file
+		// - Reusing previous version of hashicorp/time from the dependency lock file
+		// - Using previously-installed hashicorp/azurerm v3.42.0
+		// - Using previously-installed hashicorp/time v0.9.1
+		// - Using previously-installed hashicorp/random v3.4.3
+		// - Using previously-installed hashicorp/azuread v2.33.0
+		// - Using previously-installed adamcoulteroz/azurehelpers v0.2.0
+		// - Using previously-installed azure/azapi v1.3.0
+		// - Using previously-installed hashicorp/null v3.2.1
+		//
+		// Terraform has been successfully initialized!
+		//
+		// You may now begin working with Terraform. Try running "terraform plan" to see
+		// any changes that are required for your infrastructure. All Terraform commands
+		// should now work.
+		//
+		// If you ever set or change modules or backend configuration for Terraform,
+		// rerun this command to reinitialize your working directory. If you forget, other
+		// commands will detect it and remind you to do so if necessary.
+	}
 }
