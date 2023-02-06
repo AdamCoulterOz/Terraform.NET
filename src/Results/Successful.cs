@@ -2,8 +2,7 @@ using TF.Model;
 
 namespace TF.Results;
 
-public class Successful<T> : Result
+public class Successful<T> : Result<T>
 	where T : IOutput
 {
-	public required T Result { get; init; }
 }

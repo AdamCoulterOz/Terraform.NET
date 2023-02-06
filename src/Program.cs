@@ -10,8 +10,8 @@ public class Program
 		var result = await terraform.Version();
 		string output = result switch
 		{
-			Successful<Model.Version> success => success.Result.Architecture,
-			Failed failure => failure.Error,
+			Successful<Model.Version> success => success.Data.Architecture,
+			Failed<Model.Version> failure => failure.Error,
 			_ => throw new InvalidOperationException()
 		};
 		Console.WriteLine(output);
