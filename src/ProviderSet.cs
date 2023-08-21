@@ -1,22 +1,26 @@
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("TF.Tests.Unit")]
-namespace TF;
-
-public class ProviderSet
+namespace TF
 {
-	private record ProviderInstance(string Provider, string Alias)
+	public class ProviderSet
 	{
-		internal string Prefix => string.IsNullOrEmpty(Alias) ? Provider : $"{Provider}.{Alias}";
-	};
-	private readonly Dictionary<ProviderInstance, Provider> _providers = new();
+		private record ProviderInstance(string Provider, string Alias)
+		{
+			internal string Prefix => string.IsNullOrEmpty(Alias) ? Provider : $"{Provider}.{Alias}";
+		};
+		private readonly Dictionary<ProviderInstance, IProvider> _providers = new();
 
-	public void Add(Provider provider, string alias = "")
-	{
-		if (!_providers.TryAdd(new(alias, provider.Name), provider))
-			throw new ArgumentException($"Alias '{alias}' already exists for '{provider.GetType().Name}' provider.", nameof(alias));
+		public bool TryGet(out IProvider? instance, string provider, string alias = "")
+			=> _providers.TryGetValue(new ProviderInstance(provider, alias), out instance);
+
+		public void Add(IProvider provider, string alias = "")
+		{
+			if (!_providers.TryAdd(new(provider.Name, alias), provider))
+				throw new ArgumentException($"Alias '{alias}' already exists for '{provider.GetType().Name}' provider.", nameof(alias));
+		}
+
+		internal Dictionary<string, string?> CombinedProviderConfigs
+			=> _providers.SelectMany(p => p.Value.GetConfig()
+							.ToDictionary(c => $"{p.Key.Prefix}.{c.Key}", c => c.Value))
+						 .ToDictionary(pair => pair.Key, pair => (string?)pair.Value);
 	}
-
-	internal Dictionary<string, string?> CombinedProviderConfigs
-		=> _providers.SelectMany(p => p.Value.GetConfig()
-						.ToDictionary(c => $"{p.Key.Prefix}.{c.Key}", c => c.Value))
-					 .ToDictionary(pair => pair.Key, pair => (string?)pair.Value);
 }

@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>Enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="6.2.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
-        <PackageReference Include="Moq" Version="4.18.4" />
+        <PackageReference Include="NSubstitute" Version="5.0.0" />
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,5 +30,9 @@
     <ItemGroup>
         <ProjectReference Include="../src/TF.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Samples/ProvisioningTest/**" CopyToOutputDirectory="PreserveNewest" />
+      </ItemGroup>      
 
 </Project>

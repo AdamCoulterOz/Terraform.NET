@@ -1,6 +1,5 @@
 {
-  "grammarly.config.documentDialect": "american",
-  "omnisharp.enableEditorConfigSupport": true,
-  "omnisharp.enableRoslynAnalyzers": true,
-  "omnisharp.enableImportCompletion": true
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "dotnet.defaultSolution": "Terraform.NET.sln",
+  "cSpell.enableFiletypes": ["!csharp"]
 }

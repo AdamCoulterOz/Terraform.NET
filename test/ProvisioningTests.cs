@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using TF.Results;
 using Xunit;
 
 
@@ -6,26 +7,42 @@ namespace TF.Tests.Unit;
 
 public class ProvisioningTests
 {
-	private readonly DirectoryInfo _testDir;
-	private readonly Terraform? _sut;
 
-	public ProvisioningTests()
+	[Fact]
+	public static async Task Finalizer_ShouldCleanUpRootPath_WhenGarbageCollectedAsync()
 	{
-		var dir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName().Replace(".", ""));
-		_testDir = Directory.CreateDirectory(dir);
-		_sut = new() { Path = _testDir };
+		// Arrange
+		DirectoryInfo? testDir = null;
+
+		// Act
+		await using (var terraform = await Terraform.CreateAsync(new DirectoryInfo("./Samples/ProvisioningTest")))
+		{
+			testDir = terraform.Path;
+			testDir.Exists.Should().BeTrue();
+		}
+		// Assert
+		testDir.Exists.Should().BeFalse();
 	}
 
 	[Fact]
-	public async Task Finalizer_ShouldCleanUpRootPath_WhenGarbageCollectedAsync()
+	public static async Task RunTerraformVersion()
 	{
 		// Arrange
-		File.Copy("./ProvisioningTest.tf", Path.Join(_testDir.FullName, "ProvisioningTest.tf"));
-		var initResult = await _sut!.Init();
-		initResult.Should().NotBeNull();
-		_testDir.Exists.Should().BeTrue();
+		var currentArchitecture = SystemInfo.GetOSPlatform();
 
-		// Asset
-		_testDir.Exists.Should().BeFalse();
+		// Act
+		using var terraform = await Terraform.CreateAsync();;
+		var result = await terraform.Version();
+
+		// Assert
+		string output = result switch
+		{
+			Successful<Model.Version> success => success.Data.Architecture,
+			Failed<Model.Version> failure => failure.Error,
+			_ => throw new InvalidOperationException()
+		};
+
+		Assert.IsType<Successful<Model.Version>>(result);
+		Assert.Equal(currentArchitecture, result.Data.Architecture);
 	}
 }

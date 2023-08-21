@@ -7,11 +7,9 @@ using TF.Attributes;
 namespace TF.Providers.Azure.Credential;
 
 /// <summary>
-///     Azure AD Application Identity Certificate Credential
-///     <see
-///         href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_certificate">
-///         Information
-///         on how to setup a certificate credential
+///     Azure AD Application Identity Certificate Credential<br />
+///     <see href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_certificate">
+///     How to setup a certificate credential
 ///     </see>
 /// </summary>
 public class AzureCredentialSPCert : AzureCredential

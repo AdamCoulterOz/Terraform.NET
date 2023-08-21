@@ -1,11 +1,7 @@
-namespace TF.Tests.Unit
-{
-	internal class TestProvider : Provider
-	{
-		public TestProvider() : base(new VoidCredential())
-		{
-		}
+namespace TF.Tests.Unit;
 
-		protected internal override string Name => "test";
-	}
+public class TestProvider : Provider<VoidCredential>
+{
+	public TestProvider() : base(new()) { }
+	public override string Name => "test";
 }

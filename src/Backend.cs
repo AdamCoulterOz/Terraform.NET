@@ -9,13 +9,11 @@ public interface IBackend : ICliAttributed
 	void WriteBackendFile(DirectoryInfo path);
 }
 
-public abstract class Backend<T> : IBackend
+public abstract class Backend<T>(T credential) : IBackend
 	where T : Credential
 {
 	protected abstract string Name { get; }
-	public T Credential { get; init; }
-
-	public Backend(T credential) => Credential = credential;
+	public T Credential { get; init; } = credential;
 
 	IDictionary<string, string> IBackend.Parameters => CliNamedAttribute.BuildVariables(this);
 

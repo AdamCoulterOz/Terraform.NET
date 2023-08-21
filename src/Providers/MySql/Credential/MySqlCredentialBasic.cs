@@ -2,18 +2,11 @@ using TF.Attributes;
 
 namespace TF.Providers.MySql.Credential;
 
-public class MySqlCredentialBasic : MySqlCredential
+public class MySqlCredentialBasic(Uri server, string username, string password) : MySqlCredential(server)
 {
-	public MySqlCredentialBasic(Uri server, string username, string password) : base(server)
-	{
-		Username = username;
-		Password = password;
-	}
-
 	[CliNamed("MYSQL_USERNAME")]
-	public string Username { get; init; }
+	public string Username { get; init; } = username;
 
 	[CliNamed("MYSQL_PASSWORD")]
-	public string Password { get; init; }
-
+	public string Password { get; init; } = password;
 }

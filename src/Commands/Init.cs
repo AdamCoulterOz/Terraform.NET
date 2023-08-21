@@ -7,9 +7,9 @@ public sealed class Init : Main<Initialisation>
 {
 	protected override string Command => "init";
 
-	/// <summary>Set to `false` to revent backend (re)initialization for this execution</summary>
+	/// <summary>Set to `false` to prevent backend setup for this execution</summary>
 	[CliOption("backend")]
-	public bool? ReinitBackend { get; set; }
+	public bool? UseBackend { get; set; }
 
 	[CliOption("backend-config")]
 	protected ICollection<string> CalcBackendConfig => BackendConfigValues
@@ -53,8 +53,12 @@ public sealed class Init : Main<Initialisation>
 	public bool? MigrateState { get; set; }
 
 	/// <summary>Directories containing plugin binaries with the flag, which overrides all default search paths for plugins and prevents automatic plugin installation.</summary>
-	[CliOption("plugin-dir")]
 	public ICollection<DirectoryInfo> PluginDirectories { get; set; } = new List<DirectoryInfo>();
+
+	[CliOption("plugin-dir")]
+	public ICollection<string> PluginDirectoriesCli => PluginDirectories.Select(i => i.FullName).ToList();
+
+	
 
 	/// <summary>Reconfigure a backend, ignoring any saved configuration.</summary>
 	[CliOption("reconfigure")]
@@ -66,40 +70,41 @@ public sealed class Init : Main<Initialisation>
 
 	public override Initialisation Parse(string output)
 	{
-		// parse the result.Output for details about provider plugins
-		// example is below
-		return new() { Providers = new Dictionary<string, string>() };
+		var providers = new Dictionary<string, string>();
+		var lines = output.Split('\n');
+		bool isParsingProviders = false;
 
-		// EXAMPLE OUTPUT FROM INIT:
+		foreach (var line in lines)
+		{
+			if (line.Trim() == "Initializing provider plugins...")
+			{
+				isParsingProviders = true;
+				continue; // Move to the next line
+			}
 
-		// Initializing modules...
-		//
-		// Initializing the backend...
-		//
-		// Initializing provider plugins...
-		// - Reusing previous version of hashicorp/random from the dependency lock file
-		// - Reusing previous version of hashicorp/azuread from the dependency lock file
-		// - Reusing previous version of adamcoulteroz/azurehelpers from the dependency lock file
-		// - Reusing previous version of azure/azapi from the dependency lock file
-		// - Reusing previous version of hashicorp/null from the dependency lock file
-		// - Reusing previous version of hashicorp/azurerm from the dependency lock file
-		// - Reusing previous version of hashicorp/time from the dependency lock file
-		// - Using previously-installed hashicorp/azurerm v3.42.0
-		// - Using previously-installed hashicorp/time v0.9.1
-		// - Using previously-installed hashicorp/random v3.4.3
-		// - Using previously-installed hashicorp/azuread v2.33.0
-		// - Using previously-installed adamcoulteroz/azurehelpers v0.2.0
-		// - Using previously-installed azure/azapi v1.3.0
-		// - Using previously-installed hashicorp/null v3.2.1
-		//
-		// Terraform has been successfully initialized!
-		//
-		// You may now begin working with Terraform. Try running "terraform plan" to see
-		// any changes that are required for your infrastructure. All Terraform commands
-		// should now work.
-		//
-		// If you ever set or change modules or backend configuration for Terraform,
-		// rerun this command to reinitialize your working directory. If you forget, other
-		// commands will detect it and remind you to do so if necessary.
+			if (line.Trim() == "Terraform has been successfully initialized!")
+			{
+				break; // Stop parsing
+			}
+
+			if (isParsingProviders)
+			{
+				var lastSlashIndex = line.LastIndexOf('/');
+				if (lastSlashIndex != -1 && lastSlashIndex + 1 < line.Length)
+				{
+					var partsBeforeSlash = line[..lastSlashIndex].Trim().Split(' ');
+					var partsAfterSlash = line[(lastSlashIndex + 1)..].Trim().Split(' ');
+
+					var providerNameBeforeSlash = partsBeforeSlash[^1]; // Last word before the slash
+					var providerNameAfterSlash = partsAfterSlash[0]; // First word after the slash
+					var version = partsAfterSlash[1].Trim('v');
+
+					var providerName = providerNameBeforeSlash + "/" + providerNameAfterSlash;
+					providers.Add(providerName, version);
+				}
+			}
+		}
+
+		return new Initialisation { Providers = providers };
 	}
 }

@@ -1,4 +1,4 @@
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace TF.Tests.Unit;
@@ -13,9 +13,8 @@ public class ProviderCollectionTests
 
 		// Act
 		providerCollection.Add(new TestProvider());
-
 		// Assert
-		// Assert.True(providerCollection.Aliases.ContainsKey(("default", "Provider")));
+		Assert.True(providerCollection.TryGet(out _, "test"));
 	}
 
 	[Fact]
@@ -25,7 +24,8 @@ public class ProviderCollectionTests
 		var providerCollection = new ProviderSet();
 
 		// Act & Assert
-		Assert.Throws<ArgumentOutOfRangeException>(() => providerCollection.Add(new TestProvider()));
+		providerCollection.Add(new TestProvider());
+		Assert.Throws<ArgumentException>(() => providerCollection.Add(new TestProvider()));
 	}
 
 	[Fact]
@@ -41,7 +41,7 @@ public class ProviderCollectionTests
 		providerCollection.Add(testProvider, alias);
 
 		// Assert
-		// Assert.True(providerCollection.Aliases.ContainsKey((alias, testProvider.Name)));
+		Assert.True(providerCollection.TryGet(out _, testProvider.Name, alias));
 	}
 
 	[Fact]
@@ -54,18 +54,24 @@ public class ProviderCollectionTests
 		var key2 = "key2";
 		var value2 = "value2";
 		var configs = new Dictionary<string, string>
-			{ { key1, value1 }, { key2, value2 } };
+				{ { key1, value1 }, { key2, value2 } };
 
-		var providerMock = new Mock<Provider>();
-		providerMock.Setup(p => p.GetConfig())
-					.Returns(configs);
+		
+		var providerMock = Substitute.For<IProvider>(); // Substitute the interface
+		providerMock.GetConfig().Returns(configs);
+		providerMock.Name.Returns("ProviderName"); // You may need to set a value for the Name property
+
 
 		var providerCollection = new ProviderSet();
 
-		providerCollection.Add(providerMock.Object, alias);
+		providerCollection.Add(providerMock, alias);
 
 		// Act
 		var combinedConfigs = providerCollection.CombinedProviderConfigs;
 
+		// Assert
+		var key = $"{providerMock.Name}.{alias}.{key1}";
+		var matchTo = combinedConfigs[key];
+		Assert.Equal(value1, matchTo);
 	}
 }

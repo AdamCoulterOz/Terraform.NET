@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Version>0.5.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>true</ImplicitUsings>
-    <OutputType>Exe</OutputType>
     <NoWarn>0628</NoWarn>
+    <LangVersion>Preview</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>

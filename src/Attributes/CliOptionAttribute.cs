@@ -1,9 +1,7 @@
 namespace TF.Attributes;
 
-public class CliOptionAttribute : CliNamedAttribute
+public class CliOptionAttribute(string name) : CliNamedAttribute(name)
 {
-	public CliOptionAttribute(string name) : base(name) { }
-
-	public static string BuildArguments(ICliAttributed actions)
+    public static string BuildArguments(ICliAttributed actions)
 		=> BuildArguments<CliOptionAttribute>(actions);
 }

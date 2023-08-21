@@ -39,6 +39,7 @@ public class CliNamedAttribute : CliAttribute
 			var attr = property.GetCustomAttribute<T>();
 			var value = property.GetValue(item);
 			if (attr == null || value == null) continue;
+			if (value is ICollection<string> c && c.Count == 0) continue;
 			variables.Add(attr.Name, value);
 		}
 		return variables;
