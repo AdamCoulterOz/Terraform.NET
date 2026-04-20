@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/TF.csproj" />
+  <Project Path="test/TF.Tests.Unit.csproj" />
+</Solution>
