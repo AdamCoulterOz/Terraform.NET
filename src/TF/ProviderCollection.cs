@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using System.Collections.ObjectModel;
 
 namespace TF;
@@ -38,4 +37,4 @@ public class ProviderCollection
 	}
 }
 
-internal sealed record ProviderBinding(string ProviderName, string Alias, Dictionary<string, JsonValue> Settings);
+internal sealed record ProviderBinding(string ProviderName, string Alias, Dictionary<string, TFValue> Settings);

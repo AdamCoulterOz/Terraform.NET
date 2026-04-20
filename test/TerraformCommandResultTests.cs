@@ -77,6 +77,7 @@ public class TerraformCommandResultTests
 		result.PlannedChanges.Single().Action.Should().Be(ResourceAction.Create);
 		result.Outputs.Should().ContainKey("pets");
 		result.Outputs["pets"].Action.Should().Be(ResourceAction.Create);
+		result.Outputs["pets"].Type.Should().Be(TFStringType.Instance);
 	}
 
 	[Fact]
@@ -148,8 +149,11 @@ public class TerraformCommandResultTests
 		result.ProvisionOperations.Should().ContainSingle();
 		result.ProvisionOperations.Single().Type.Should().Be(ProvisionOperationType.ProvisionStart);
 		result.ProvisionOperations.Single().Provisioner.Should().Be("local-exec");
+		result.ProvisionOperations.Single().Resource.ResourceKey.Should().NotBeNull();
+		result.ProvisionOperations.Single().Resource.ResourceKey!.GetValue<int>().Should().Be(0);
 		result.Outputs.Should().ContainKey("pets");
 		result.Outputs["pets"].Value.Should().NotBeNull();
+		result.Outputs["pets"].Value!.GetValue<string>().Should().Be("smart-lizard");
 		result.ChangeSummary!.Operation.Should().Be(CommandOperation.Apply);
 	}
 }

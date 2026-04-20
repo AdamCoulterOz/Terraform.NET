@@ -6,7 +6,16 @@ public class Variables
 {
 	public Variables() => VariableDictionary = [];
 
-	public Dictionary<string, object> VariableDictionary { get; set; }
+	public Dictionary<string, TFValue> VariableDictionary { get; set; }
+
+	public TFValue? this[string name]
+	{
+		get => VariableDictionary.TryGetValue(name, out var value) ? value : null;
+		set => VariableDictionary[name] = value?.DeepClone() ?? TFValue.Null;
+	}
+
+	public void Set<T>(string name, T value)
+		=> VariableDictionary[name] = TFValue.From(value);
 
 	public ReadOnlyCollection<string> Arguments
 	{

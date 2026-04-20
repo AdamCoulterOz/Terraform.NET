@@ -47,12 +47,12 @@ internal static class ProviderConfigurationRewriter
 			var key = (binding.ProviderName, NormalizeAlias(binding.Alias));
 			if (!merged.TryGetValue(key, out var block))
 			{
-				block = new ProviderConfigBlock(binding.ProviderName, key.Item2, new JsonObject());
+				block = new ProviderConfigBlock(binding.ProviderName, key.Item2, new TFObject());
 				merged.Add(key, block);
 			}
 
 			foreach (var (name, value) in binding.Settings)
-				block.Settings[name] = CloneNode(value);
+				block.Settings[name] = value.DeepClone();
 		}
 
 		return merged;
@@ -88,7 +88,8 @@ internal static class ProviderConfigurationRewriter
 
 	private static JsonObject ToJsonBlock(ProviderConfigBlock block)
 	{
-		var json = CloneObject(block.Settings);
+		var json = block.Settings.ToJsonNode() as JsonObject
+			?? throw new InvalidOperationException($"Provider block '{block.ProviderName}' did not serialize to a JSON object.");
 		if (block.Alias != ProviderCollection.DefaultAlias)
 			json["alias"] = block.Alias;
 		return json;
@@ -110,25 +111,24 @@ internal static class ProviderConfigurationRewriter
 			throw new Exception($"Failed to parse Terraform JSON file '{file.Name}'.", ex);
 		}
 
-		if (rootNode is not JsonObject rootObject)
+		if (TFValue.FromJsonNode(rootNode) is not TFObject rootObject)
 			return;
 
-		if (rootObject["provider"] is not JsonObject providersObject)
+		if (rootObject["provider"] is not TFObject providersObject)
 			return;
 
 		foreach (var providerEntry in providersObject.ToList())
 		{
-			if (providerEntry.Value is null) continue;
 			var providerName = providerEntry.Key;
 			switch (providerEntry.Value)
 			{
-				case JsonObject providerBlock:
+				case TFObject providerBlock:
 					extractedBlocks.Add(CreateBlockFromJson(providerName, providerBlock, file.Name));
 					break;
-				case JsonArray providerBlocks:
+				case TFArray providerBlocks:
 					foreach (var item in providerBlocks)
 					{
-						if (item is not JsonObject providerObject)
+						if (item is not TFObject providerObject)
 							throw new Exception($"Provider '{providerName}' in '{file.Name}' must be encoded as a JSON object.");
 						extractedBlocks.Add(CreateBlockFromJson(providerName, providerObject, file.Name));
 					}
@@ -142,14 +142,14 @@ internal static class ProviderConfigurationRewriter
 		WriteJsonRemainder(file, rootObject);
 	}
 
-	private static ProviderConfigBlock CreateBlockFromJson(string providerName, JsonObject providerBlock, string fileName)
+	private static ProviderConfigBlock CreateBlockFromJson(string providerName, TFObject providerBlock, string fileName)
 	{
-		var settings = CloneObject(providerBlock);
+		var settings = (TFObject)providerBlock.DeepClone();
 		var alias = ReadAndRemoveAlias(settings, providerName, fileName);
 		return new ProviderConfigBlock(providerName, alias, settings);
 	}
 
-	private static void WriteJsonRemainder(FileInfo file, JsonObject rootObject)
+	private static void WriteJsonRemainder(FileInfo file, TFObject rootObject)
 	{
 		if (rootObject.Count == 0)
 		{
@@ -192,13 +192,13 @@ internal static class ProviderConfigurationRewriter
 		return updated;
 	}
 
-	private static string ReadAndRemoveAlias(JsonObject settings, string providerName, string fileName)
+	private static string ReadAndRemoveAlias(TFObject settings, string providerName, string fileName)
 	{
-		if (!settings.TryGetPropertyValue("alias", out var aliasNode) || aliasNode is null)
+		if (!settings.TryGetValue("alias", out var aliasNode))
 			return ProviderCollection.DefaultAlias;
 
 		settings.Remove("alias");
-		if (aliasNode is JsonValue aliasValue && aliasValue.TryGetValue<string>(out var alias))
+		if (aliasNode.TryGetValue<string>(out var alias))
 			return NormalizeAlias(alias);
 
 		throw new Exception($"Provider '{providerName}' in '{fileName}' must declare alias as a literal string.");
@@ -210,13 +210,7 @@ internal static class ProviderConfigurationRewriter
 	private static string DisplayAlias(string alias)
 		=> alias == ProviderCollection.DefaultAlias ? "<default>" : alias;
 
-	private static JsonNode CloneNode(JsonNode node)
-		=> JsonNode.Parse(node.ToJsonString())!;
-
-	private static JsonObject CloneObject(JsonObject node)
-		=> (JsonObject)JsonNode.Parse(node.ToJsonString())!;
-
-	private sealed record ProviderConfigBlock(string ProviderName, string Alias, JsonObject Settings);
+	private sealed record ProviderConfigBlock(string ProviderName, string Alias, TFObject Settings);
 	private sealed record TextSpan(int Start, int Length);
 	private sealed record ProviderBlockMatch(string ProviderName, string Body, TextSpan Span);
 
@@ -336,11 +330,11 @@ internal static class ProviderConfigurationRewriter
 
 		private HclBodyParser(string content) => _content = content;
 
-		internal static JsonObject Parse(string content) => new HclBodyParser(content).ParseBody();
+		internal static TFObject Parse(string content) => new HclBodyParser(content).ParseBody();
 
-		private JsonObject ParseBody()
+		private TFObject ParseBody()
 		{
-			var body = new JsonObject();
+			var body = new TFObject();
 			while (true)
 			{
 				SkipWhitespaceAndComments(includeNewLines: true);
@@ -357,7 +351,7 @@ internal static class ProviderConfigurationRewriter
 				{
 					_index++;
 					var value = ParseExpression();
-					body[key] = value;
+					body[key] = value ?? TFValue.Null;
 					SkipDelimiters();
 					continue;
 				}
@@ -380,7 +374,7 @@ internal static class ProviderConfigurationRewriter
 			}
 		}
 
-		private JsonNode? ParseExpression()
+		private TFValue? ParseExpression()
 		{
 			SkipWhitespaceAndComments(includeNewLines: false);
 			if (IsAtEnd)
@@ -395,10 +389,10 @@ internal static class ProviderConfigurationRewriter
 			};
 		}
 
-		private JsonObject ParseInlineObject()
+		private TFObject ParseInlineObject()
 		{
 			Expect('{');
-			var json = new JsonObject();
+			var json = new TFObject();
 			while (true)
 			{
 				SkipWhitespaceAndComments(includeNewLines: true);
@@ -416,15 +410,15 @@ internal static class ProviderConfigurationRewriter
 					throw new Exception($"Expected '=' after object key '{key}'.");
 
 				_index++;
-				json[key] = ParseExpression();
+				json[key] = ParseExpression() ?? TFValue.Null;
 				SkipDelimiters();
 			}
 		}
 
-		private JsonArray ParseArray()
+		private TFArray ParseArray()
 		{
 			Expect('[');
-			var array = new JsonArray();
+			var items = new List<TFValue>();
 			while (true)
 			{
 				SkipWhitespaceAndComments(includeNewLines: true);
@@ -433,34 +427,36 @@ internal static class ProviderConfigurationRewriter
 				if (Peek() == ']')
 				{
 					_index++;
-					return array;
+					return new TFArray(items);
 				}
 
-				array.Add(ParseExpression());
+				items.Add(ParseExpression() ?? TFValue.Null);
 				SkipDelimiters();
 			}
 		}
 
-		private JsonNode? ParseStringNode()
+		private TFValue ParseStringNode()
 		{
 			var start = _index;
 			_index = SkipQuotedString(_content, _index) + 1;
-			return JsonNode.Parse(_content[start.._index]);
+			var node = JsonNode.Parse(_content[start.._index])
+				?? throw new InvalidOperationException("Unable to parse quoted Terraform string.");
+			return TFValue.FromJsonNode(node);
 		}
 
-		private JsonValue? ParseScalarOrExpression()
+		private TFValue? ParseScalarOrExpression()
 		{
 			var expression = ReadRawExpression();
 			if (bool.TryParse(expression, out var booleanValue))
-				return JsonValue.Create(booleanValue)!;
+				return TFValue.From(booleanValue);
 
 			if (expression == "null")
-				return null;
+				return TFValue.Null;
 
 			if (decimal.TryParse(expression, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var decimalValue))
-				return JsonValue.Create(decimalValue)!;
+				return TFValue.From(decimalValue);
 
-			return JsonValue.Create("${" + expression + "}");
+			return TFValue.Expression("${" + expression + "}");
 		}
 
 		private string ReadRawExpression()
@@ -546,25 +542,27 @@ internal static class ProviderConfigurationRewriter
 			}
 		}
 
-		private static void AddBlock(JsonObject body, string key, List<string> labels, JsonObject blockBody)
+		private static void AddBlock(TFObject body, string key, List<string> labels, TFObject blockBody)
 		{
-			var node = blockBody;
+			TFValue node = blockBody;
 			for (var labelIndex = labels.Count - 1; labelIndex >= 0; labelIndex--)
-				node = new JsonObject { [labels[labelIndex]] = node };
+			{
+				var labelledNode = new TFObject();
+				labelledNode[labels[labelIndex]] = node;
+				node = labelledNode;
+			}
 
-			if (!body.TryGetPropertyValue(key, out var existing) || existing is null)
+			if (!body.TryGetValue(key, out var existing))
 			{
 				body[key] = node;
 				return;
 			}
 
-			if (existing is JsonArray array)
+			body[key] = existing switch
 			{
-				array.Add(node);
-				return;
-			}
-
-			body[key] = new JsonArray(existing, node);
+				TFArray array => new TFArray(array.Concat([node])),
+				_ => new TFArray([existing, node]),
+			};
 		}
 
 		private string ReadIdentifierOrString()

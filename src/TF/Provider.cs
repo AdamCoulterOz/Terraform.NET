@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 namespace TF;
 public abstract class Provider(Credential credential)
 {
@@ -8,7 +6,7 @@ public abstract class Provider(Credential credential)
 			=> GetEnvironmentConfig();
 		internal Dictionary<string, string> GetEnvironmentConfig()
 			=> Credential.EnvKeys().AppendDictionary(this.EnvKeys());
-		internal Dictionary<string, JsonValue> GetTerraformConfig()
-			=> Credential.TFNodes().AppendDictionary(this.TFNodes());
+		internal Dictionary<string, TFValue> GetTerraformConfig()
+			=> Credential.TFValues().AppendDictionary(this.TFValues());
 		public abstract string Name { get; }
 	}

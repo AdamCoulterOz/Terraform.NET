@@ -83,7 +83,7 @@ public sealed class ResourceReference
 	public required string ResourceType { get; init; }
 	public required string ResourceName { get; init; }
 	public string? ImpliedProvider { get; init; }
-	public JsonElement? ResourceKey { get; init; }
+	public TFValue? ResourceKey { get; init; }
 }
 
 public sealed class ResourceChangeInfo
@@ -97,8 +97,8 @@ public sealed class ResourceChangeInfo
 public sealed class OutputValue
 {
 	public ResourceAction? Action { get; init; }
-	public JsonElement? Value { get; init; }
-	public JsonElement? Type { get; init; }
+	public TFValue? Value { get; init; }
+	public TFType? Type { get; init; }
 	public bool Sensitive { get; init; }
 }
 
@@ -569,8 +569,8 @@ internal static partial class CommandResponseParser
 		=> new()
 		{
 			Action = ParseNullableResourceAction(output.Action),
-			Value = output.Value?.Clone(),
-			Type = output.Type?.Clone(),
+			Value = output.Value?.DeepClone(),
+			Type = output.Type,
 			Sensitive = output.Sensitive,
 		};
 
@@ -663,7 +663,7 @@ internal static partial class CommandResponseParser
 			ResourceType = resource.ResourceType,
 			ResourceName = resource.ResourceName,
 			ImpliedProvider = resource.ImpliedProvider,
-			ResourceKey = resource.ResourceKey?.Clone(),
+			ResourceKey = resource.ResourceKey?.DeepClone(),
 		};
 
 	[GeneratedRegex(@"provider:\s+(?<source>[^,\s]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
@@ -743,8 +743,8 @@ internal static partial class CommandResponseParser
 	private sealed class TerraformUiOutputValue
 	{
 		public string? Action { get; set; }
-		public JsonElement? Value { get; set; }
-		public JsonElement? Type { get; set; }
+		public TFValue? Value { get; set; }
+		public TFType? Type { get; set; }
 		public bool Sensitive { get; set; }
 	}
 
@@ -776,6 +776,6 @@ internal static partial class CommandResponseParser
 
 		public string? ImpliedProvider { get; set; }
 
-		public JsonElement? ResourceKey { get; set; }
+		public TFValue? ResourceKey { get; set; }
 	}
 }
