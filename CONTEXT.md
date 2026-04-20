@@ -32,25 +32,23 @@ Last updated: 2026-04-20 (Australia/Sydney)
 2. `Init`, `Validate`, `Plan`, `Apply`, `Destroy`, and `Refresh` build CLI arguments directly in `src/Terraform.cs`.
 3. Variables are written to `execute.tfvars.json` when needed.
 4. Backend settings are added through backend arguments plus a generated `_backend.tf`.
-5. Provider credentials/config are injected as environment variables before executing Terraform.
+5. Provider bindings are rewritten into `providers.auto.tf.json` inside the execution root before Terraform runs.
 6. Results come back as `TFResult`.
 
 ## Provider Alias Model (Current)
 - Providers are stored in `ProviderCollection` under `(alias, provider)` keys.
-- `CombinedProviderConfigs` currently merges only the provider environment variables themselves and does not encode the alias into the emitted keys.
-- That means aliased instances of the same provider cannot safely coexist when they need different credentials or settings, because the environment variables collide before Terraform runs.
+- `ProviderConfigurationRewriter` scans the root execution workspace for provider blocks in `.tf` and `.tf.json` files.
+- Extracted provider settings are merged with bound provider values from `ProviderCollection`.
+- The final resolved provider configuration is written to `providers.auto.tf.json`.
+- Original provider blocks are removed from the copied root files so the generated file is the single source of truth for that run.
 
-## Important Limitation
-The current runtime assumes provider configuration can be expressed through process environment variables. That works for single-provider cases, but it is the wrong mechanism for per-alias provider binding. Terraform resolves provider aliases from configuration, not from separate environment-variable namespaces.
+## Current Limitations
+- The HCL extraction path is intentionally focused on provider blocks and common provider-setting expressions. If a provider block uses unsupported HCL constructs, the runtime should fail loudly rather than silently misrewrite it.
+- Tests currently cover the rewrite/merge flow directly, but not a full Terraform integration run with multiple real aliased providers.
 
 ## Direction For Provider Mapping Work
-The next change should happen only inside the isolated temporary execution workspace:
-- inspect the target Terraform root for provider parameter blocks
-- extract their names, types, aliases, and current settings
-- remove those in-workspace definitions from the copied configuration
-- apply bound provider alias settings over the extracted defaults
-- preserve existing settings where bindings do not override them
-- write the resolved provider configuration to `providers.auto.tf.json`
+- Extend test coverage for more provider block shapes, especially nested/repeated blocks and expression-heavy settings.
+- Decide whether provider rewrite should expose diagnostics or dry-run inspection output for callers.
 
 ## Key Invariants
 - Never mutate the caller's source Terraform files in place; only rewrite the copied execution workspace.
@@ -59,9 +57,9 @@ The next change should happen only inside the isolated temporary execution works
 
 ## Outstanding Follow-Up
 - Decide whether package dependency upgrades should be done before or after the provider mapping work.
-- Add tests that cover aliased providers with different bound settings.
+- Add an end-to-end Terraform integration test for aliased providers once a stable sample configuration is in place.
 
 ## Technical Debt
 - `src/Terraform.cs` assembles command arguments inline; command construction is not yet modeled as strongly typed command objects.
-- Test coverage is very thin on `main`; only a minimal provisioning lifecycle test currently runs.
-- Provider alias support is structurally incomplete until runtime-generated provider configuration replaces env-only injection for alias-specific settings.
+- Test coverage is still fairly thin on `main`, even after the provider rewrite unit tests.
+- The provider rewriter currently hand-parses HCL instead of using a dedicated parser library.

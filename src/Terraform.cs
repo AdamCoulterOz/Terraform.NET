@@ -38,6 +38,8 @@ public class Terraform : IDisposable
 		string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false,
 		bool withDetailedExitCode = false)
 	{
+		ProviderConfigurationRewriter.Rewrite(RootPath, Providers);
+
 		var command = Cli.Wrap(_tfPath)
 			.WithWorkingDirectory(RootPath.FullName);
 		var arguments = new List<string> { action };
@@ -51,16 +53,16 @@ public class Terraform : IDisposable
 			File.WriteAllText(Path.Join(RootPath.FullName, "execute.tfvars.json"), json);
 			arguments.Add("-var-file=\"execute.tfvars.json\"");
 		}
-		if (withBackendConfig)
-		{
-			Backend.WriteBackendFile(RootPath);
-			arguments.AddRange(Backend.Arguments);
-		}
-		command = command.WithArguments(arguments, false);
-		var environmentVariables = Providers.CombinedProviderConfigs;
-		if (withConfiguration)
-			environmentVariables.Add(Configuration.ConfigFileEnvVariable, Configuration.FilePath(RootPath));
-		var envVariables = environmentVariables.ToDictionary(kv => kv.Key, kv => (string?)kv.Value); //this line is redundent, used to fix compiler warning
+			if (withBackendConfig)
+			{
+				Backend.WriteBackendFile(RootPath);
+				arguments.AddRange(Backend.Arguments);
+			}
+			command = command.WithArguments(arguments, false);
+			var environmentVariables = new Dictionary<string, string>();
+			if (withConfiguration)
+				environmentVariables.Add(Configuration.ConfigFileEnvVariable, Configuration.FilePath(RootPath));
+			var envVariables = environmentVariables.ToDictionary(kv => kv.Key, kv => (string?)kv.Value); //this line is redundent, used to fix compiler warning
 		command = command.WithEnvironmentVariables(envVariables);
 
 		if (OutputStream is not null)
