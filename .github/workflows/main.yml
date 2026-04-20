@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '6.0.x'
-      - run: dotnet build src/TF.csproj
+          dotnet-version: '10.0.x'
+      - run: dotnet build Terraform.NET.slnx
 
       # Publish
       - name: publish on version change
@@ -22,7 +22,7 @@ jobs:
         uses: rohith/publish-nuget@v2
         with:
           # Filepath of the project to be packaged, relative to root of repository
-          PROJECT_FILE_PATH: src/TF.csproj
+          PROJECT_FILE_PATH: src/TF/TF.csproj
 
           # NuGet package id, used for version detection & defaults to project name
           # PACKAGE_NAME: TF

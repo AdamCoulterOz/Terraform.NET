@@ -6,8 +6,8 @@ namespace TF.Tests.Unit;
 
 public class ProvisioningTests
 {
-    private DirectoryInfo _testDir;
-    private TF.Terraform? _sut;
+    private readonly DirectoryInfo _testDir;
+    private readonly Terraform? _sut;
 
     public ProvisioningTests()
     {

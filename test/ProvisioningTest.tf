@@ -1,1 +1,3 @@
-resource "random_string" "random" {}
+resource "random_string" "random" {
+    length  = 16
+}

@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using FluentAssertions;
-using TF.Credentials.Azure;
-using TF.Providers;
+using TF.Azure.Credentials;
+using TF.Azure.Providers;
 using Xunit;
 
 namespace TF.Tests.Unit;
