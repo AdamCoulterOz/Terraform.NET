@@ -28,6 +28,7 @@ Last updated: 2026-04-21 (Australia/Sydney)
   - `src/TF/CommandJsonResult.cs`
   - `src/TF/OperationResult.cs`
   - `src/TF/CommandResponse.cs`
+  - `src/TF/ShowResult.cs`
   - `src/TF/ValidateResult.cs`
   - `src/TF/Model/Plan.cs`
 - Built-in providers/backends:
@@ -54,7 +55,11 @@ Last updated: 2026-04-21 (Australia/Sydney)
    - diagnostics and change summaries
    - enums for operation/action/severity discriminators and `TimeSpan` for elapsed durations
 8. The canonical command response is then transformed into operation-specific result objects (`InitResult`, `PlanResult`, `ApplyResult`, `DestroyResult`, `RefreshResult`).
-9. `Plan()` writes a managed scratch plan file inside the execution root, and `Show<TResult>()` consumes that file and cleans it up after deserializing it.
+9. `Plan()` writes a managed scratch plan file inside the execution root.
+10. `Show()` consumes that managed plan file and returns a composite result:
+   - `Json`: the `terraform show -json` document as a `TFObject`-backed `ShowJsonResult`
+   - `File`: the human-readable `terraform show` text as a `ShowFileResult`
+11. `Show<TResult>()` still exists for callers that want to deserialize only the JSON form directly into a custom type.
 
 ## Terraform Value Model
 - Core now uses a shared `TFValue` hierarchy instead of loose `object`, `dynamic`, `JsonElement`, and `JsonValue` payloads where practical.
@@ -91,7 +96,7 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - The HCL extraction path is intentionally focused on provider blocks and common provider-setting expressions. If a provider block uses unsupported HCL constructs, the runtime should fail loudly rather than silently misrewrite it.
 - Tests currently cover the rewrite/merge flow directly, but not a full Terraform integration run with multiple real aliased providers.
 - Consumers now need explicit references to the cloud/database-specific assemblies when they use those provider/backend types; the core assembly no longer carries those implementations.
-- `src/TF/Model/*` is still only lightly exercised and may still contain older public shapes that should either be promoted into the main result surface or removed in a future cleanup pass.
+- `src/TF/Model/*` is still only lightly exercised. In particular, `src/TF/Model/Plan.cs` does not currently line up with the full current `terraform show -json` plan document shape and should not be treated as the canonical show model yet.
 
 ## Direction For Provider Mapping Work
 - Extend test coverage for more provider block shapes, especially nested/repeated blocks and expression-heavy settings.
@@ -110,7 +115,7 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - Decide whether package dependency upgrades should be done before or after the provider mapping work.
 - Add an end-to-end Terraform integration test for aliased providers once a stable sample configuration is in place.
 - Decide whether the new Azure backend assembly should become a separately published package or stay as a solution-level assembly only.
-- Decide whether the old `src/TF/Model/*` show/plan classes remain part of the supported public API or should be consolidated behind operation-specific results and `TFValue`.
+- Decide whether the old `src/TF/Model/*` plan/show-related classes should be updated to match the current Terraform JSON schema and folded into `ShowResult`, or removed if the raw `TFValue` document surface is the intended public API.
 - Decide whether `TFType` should eventually also drive validation/coercion helpers for `Variables` and other user-supplied input.
 
 ## Technical Debt

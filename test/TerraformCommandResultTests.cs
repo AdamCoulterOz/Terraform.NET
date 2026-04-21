@@ -156,4 +156,82 @@ public class TerraformCommandResultTests
 		result.Outputs["pets"].Value!.GetValue<string>().Should().Be("smart-lizard");
 		result.ChangeSummary!.Operation.Should().Be(CommandOperation.Apply);
 	}
+
+	[Fact]
+	public void ShowJsonResult_ShouldDeserializePlanDocument()
+	{
+		var raw = new TFResult(
+			success: true,
+			output: """
+			        {
+			          "format_version": "1.0",
+			          "applyable": true,
+			          "complete": true,
+			          "errored": false,
+			          "variables": {
+			            "name": {
+			              "value": "smart-lizard"
+			            }
+			          },
+			          "resource_changes": [
+			            {
+			              "address": "random_pet.animal",
+			              "mode": "managed",
+			              "type": "random_pet",
+			              "name": "animal",
+			              "change": {
+			                "actions": ["create"],
+			                "before": null,
+			                "after": {
+			                  "id": "smart-lizard"
+			                },
+			                "replace_paths": []
+			              }
+			            }
+			          ],
+			          "output_changes": {
+			            "pets": {
+			              "change": {
+			                "actions": ["create"],
+			                "before": null,
+			                "after": "smart-lizard",
+			                "replace_paths": []
+			              }
+			            }
+			          }
+			        }
+			        """,
+			error: string.Empty,
+			exitCode: 0);
+
+		var result = new ShowJsonResult();
+		((ITerraformCommandResult)result).LoadFromCommandResult(raw, JsonOptions);
+
+		result.Success.Should().BeTrue();
+		result.Document["format_version"].GetValue<string>().Should().Be("1.0");
+		result.Document["applyable"].GetValue<bool>().Should().BeTrue();
+		result.Document["variables"].Should().BeOfType<TFObject>();
+		result.Document["resource_changes"].Should().BeOfType<TFArray>();
+		result.Document["output_changes"].Should().BeOfType<TFObject>();
+	}
+
+	[Fact]
+	public void ShowFileResult_ShouldRetainRenderedPlanOutput()
+	{
+		var raw = new TFResult(
+			success: true,
+			output: """
+			        Terraform used the selected providers to generate the following execution plan.
+			          + create random_pet.animal
+			        """,
+			error: string.Empty,
+			exitCode: 0);
+
+		var result = ShowFileResult.From(raw);
+
+		result.Success.Should().BeTrue();
+		result.ExitCode.Should().Be(0);
+		result.Output.Should().Contain("execution plan");
+		result.Error.Should().BeNull();
+	}
 }

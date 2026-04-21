@@ -39,20 +39,26 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath) :
 		=> await Command<ApplyResult>("apply", withVars: true, autoApprove: true, asJson: true);
 	public async Task<DestroyResult> Destroy()
 		=> await Command<DestroyResult>("destroy", withVars: true, autoApprove: true, asJson: true);
-    public async Task<PlanResult> Plan()
-    {
+	public async Task<PlanResult> Plan()
+	{
 		DeletePlanFile();
 		var result = await Command<PlanResult>("plan", withVars: true, withDetailedExitCode: true, outFile: ManagedPlanFileName, asJson: true);
 		if (!result.Success)
 			DeletePlanFile();
 		return result;
-    }
+	}
 
-    public async Task<TResult> Show<TResult>()
-    {
+	public async Task<ShowResult> Show()
+	{
 		EnsurePlanExists();
-		return await Execute(() => Command<TResult>("show", asJson: true, additionalArguments: [ManagedPlanFileName]), DeletePlanFile);
-    }
+		return await Execute(ShowManagedPlan, DeletePlanFile);
+	}
+
+	public async Task<TResult> Show<TResult>()
+	{
+		EnsurePlanExists();
+		return await Execute(() => ShowJson<TResult>(), DeletePlanFile);
+	}
 
 	private async Task<TFResult> Command(string action, bool autoApprove = false, bool withVars = false,
 		string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false,
@@ -136,6 +142,19 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath) :
 			?? throw new InvalidOperationException(
 				$"Terraform returned JSON, but it could not be deserialized into {typeof(TResult).FullName}.");
 	}
+
+	private async Task<ShowResult> ShowManagedPlan()
+		=> new()
+		{
+			Json = await ShowJson<ShowJsonResult>(),
+			File = ShowFileResult.From(await ShowFile())
+		};
+
+	private Task<TResult> ShowJson<TResult>()
+		=> Command<TResult>("show", asJson: true, additionalArguments: [ManagedPlanFileName]);
+
+	private Task<TFResult> ShowFile()
+		=> Command("show", additionalArguments: [ManagedPlanFileName]);
 
 	private static async Task<TResult> Execute<TResult>(Func<Task<TResult>> action, Action cleanup)
 	{
