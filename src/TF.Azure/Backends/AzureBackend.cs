@@ -15,7 +15,7 @@ namespace TF.Azure.Backends;
 public class AzureBackend : Backend
 {
     public AzureBackend(AzureCredential credential, Guid tenantId, Guid subscriptionId,
-        string resourceGroupName, string storageAccountName, string containerName, string blobName) : base(credential)
+        string resourceGroupName, string storageAccountName, string containerName, string blobName, bool validateContainer = true) : base(credential)
     {
         Credential = credential;
         TenantId = tenantId;
@@ -24,7 +24,8 @@ public class AzureBackend : Backend
         StorageAccountName = storageAccountName;
         ContainerName = containerName;
         BlobName = blobName;
-        ValidateCreateContainer();
+        if (validateContainer)
+            ValidateCreateContainer();
     }
 
     /// <summary>
@@ -44,7 +45,7 @@ public class AzureBackend : Backend
     /// <param name="containerName">The container in the storage account</param>
     /// <param name="blobName"></param>
     public AzureBackend(AzureCredential credential, Guid tenantId, string storageAccountResourceId,
-        string containerName, string blobName) : base(credential)
+        string containerName, string blobName, bool validateContainer = true) : base(credential)
     {
         TenantId = tenantId;
         const string storageAccountResourceType = "Microsoft.Storage/storageAccounts";
@@ -63,7 +64,8 @@ public class AzureBackend : Backend
         StorageAccountName = storageAccount.Name;
         ContainerName = containerName;
         BlobName = blobName;
-        ValidateCreateContainer();
+        if (validateContainer)
+            ValidateCreateContainer();
     }
 
     private void ValidateCreateContainer()

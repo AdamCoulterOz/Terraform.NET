@@ -4,7 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>true</ImplicitUsings>
-    <IsPackable>false</IsPackable>
+    <Version>1.0.0-preview</Version>
+    <PackageId>Terraform.NET.Azure</PackageId>
+    <PackageDescription>Azure provider and backend extensions for Terraform.NET.</PackageDescription>
+    <Authors>Adam Coulter</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RootNamespace>TF.Azure</RootNamespace>
     <AssemblyName>TF.Azure</AssemblyName>
   </PropertyGroup>

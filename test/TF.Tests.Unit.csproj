@@ -28,7 +28,10 @@
     <ItemGroup>
         <ProjectReference Include="../src/TF/TF.csproj" />
         <ProjectReference Include="../src/TF.Azure/TF.Azure.csproj" />
+        <ProjectReference Include="../src/TF.AzureDevOps/TF.AzureDevOps.csproj" />
+        <ProjectReference Include="../src/TF.Fabric/TF.Fabric.csproj" />
         <ProjectReference Include="../src/TF.MySql/TF.MySql.csproj" />
+        <ProjectReference Include="../src/TF.PowerPlatform/TF.PowerPlatform.csproj" />
     </ItemGroup>
 
 </Project>

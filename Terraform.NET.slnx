@@ -1,6 +1,9 @@
 <Solution>
   <Project Path="src/TF/TF.csproj" />
   <Project Path="src/TF.Azure/TF.Azure.csproj" />
+  <Project Path="src/TF.AzureDevOps/TF.AzureDevOps.csproj" />
+  <Project Path="src/TF.Fabric/TF.Fabric.csproj" />
   <Project Path="src/TF.MySql/TF.MySql.csproj" />
+  <Project Path="src/TF.PowerPlatform/TF.PowerPlatform.csproj" />
   <Project Path="test/TF.Tests.Unit.csproj" />
 </Solution>

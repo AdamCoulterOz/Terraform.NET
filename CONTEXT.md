@@ -1,6 +1,6 @@
 # Terraform.NET Context
 
-Last updated: 2026-04-21 (Australia/Sydney)
+Last updated: 2026-05-14 (Australia/Sydney)
 
 ## Project Purpose
 `Terraform.NET` is a .NET wrapper around the Terraform CLI. It creates a temporary working directory, can write Terraform configuration inputs into that workspace, runs Terraform commands through `CliWrap`, and projects Terraform JSON output into typed, operation-specific .NET results.
@@ -8,15 +8,19 @@ Last updated: 2026-04-21 (Australia/Sydney)
 ## Current Baseline
 - Default branch: `main`
 - Runtime target: `.NET 10` (`src/TF/TF.csproj`)
+- Current package release line: `1.0.0-preview`
 - Verification status on `main`:
-  - `dotnet test test/TF.Tests.Unit.csproj` passes
+  - `dotnet test Terraform.NET.slnx --configuration Release` passes
   - `dotnet restore src/TF/TF.csproj` is clean after replacing the deprecated Fluent ARM package
-- CI workflow now publishes from `main` in `.github/workflows/main.yml` and builds `Terraform.NET.slnx`
+- CI workflow now publishes from `main` in `.github/workflows/main.yml`, tests `Terraform.NET.slnx` in Release, packs all packable Terraform.NET provider assemblies, and pushes them to NuGet with `--skip-duplicate`.
 
 ## High-Level Architecture
 - Main wrapper: `src/TF/Terraform.cs`
 - Backend abstraction: `src/TF/Backend.cs`
 - Azure assembly: `src/TF.Azure/TF.Azure.csproj`
+- Azure DevOps assembly: `src/TF.AzureDevOps/TF.AzureDevOps.csproj`
+- Fabric assembly: `src/TF.Fabric/TF.Fabric.csproj`
+- Power Platform assembly: `src/TF.PowerPlatform/TF.PowerPlatform.csproj`
 - MySQL assembly: `src/TF.MySql/TF.MySql.csproj`
 - Provider abstraction: `src/TF/Provider.cs`
 - Provider alias collection: `src/TF/ProviderCollection.cs`
@@ -34,7 +38,16 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - Built-in providers/backends:
   - `src/TF/BuiltIn/*`
   - `src/TF.Azure/*`
+  - `src/TF.AzureDevOps/*`
+  - `src/TF.Fabric/*`
+  - `src/TF.PowerPlatform/*`
   - `src/TF.MySql/*`
+- Provider/auth extension packages currently published from this repo are:
+  - `Terraform.NET`
+  - `Terraform.NET.Azure`
+  - `Terraform.NET.AzureDevOps`
+  - `Terraform.NET.Fabric`
+  - `Terraform.NET.PowerPlatform`
 - Unit tests:
   - `test/ProvisioningTests.cs`
   - `test/TerraformCommandResultTests.cs`
@@ -56,10 +69,12 @@ Last updated: 2026-04-21 (Australia/Sydney)
    - enums for operation/action/severity discriminators and `TimeSpan` for elapsed durations
 8. The canonical command response is then transformed into operation-specific result objects (`InitResult`, `PlanResult`, `ApplyResult`, `DestroyResult`, `RefreshResult`).
 9. `Plan()` writes a managed scratch plan file inside the execution root.
-10. `Show()` consumes that managed plan file and returns a composite result:
+10. `Show()` consumes that managed plan file and returns a composite result. Callers can keep the managed plan by passing `deleteManagedPlan: false`:
    - `Json`: the `terraform show -json` document as a `TFObject`-backed `ShowJsonResult`
    - `File`: the human-readable `terraform show` text as a `ShowFileResult`
-11. `Show<TResult>()` still exists for callers that want to deserialize only the JSON form directly into a custom type.
+11. `ApplyPlan()` applies the existing managed plan file and then deletes it, allowing callers to inspect and apply the same plan.
+12. `Output()` returns typed `terraform output -json` values as `OutputValue` records.
+13. `Show<TResult>()` still exists for callers that want to deserialize only the JSON form directly into a custom type.
 
 ## Terraform Value Model
 - Core now uses a shared `TFValue` hierarchy instead of loose `object`, `dynamic`, `JsonElement`, and `JsonValue` payloads where practical.
@@ -90,12 +105,14 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - `ProviderConfigurationRewriter` scans the root execution workspace for provider blocks in `.tf` and `.tf.json` files.
 - Extracted provider settings are merged with bound provider values from `ProviderCollection`.
 - The final resolved provider configuration is written to `providers.auto.tf.json`.
+- Combined provider environment values are merged deterministically and tolerate duplicate keys only when the values match.
 - Original provider blocks are removed from the copied root files so the generated file is the single source of truth for that run.
 
 ## Current Limitations
 - The HCL extraction path is intentionally focused on provider blocks and common provider-setting expressions. If a provider block uses unsupported HCL constructs, the runtime should fail loudly rather than silently misrewrite it.
 - Tests currently cover the rewrite/merge flow directly, but not a full Terraform integration run with multiple real aliased providers.
 - Consumers now need explicit references to the cloud/database-specific assemblies when they use those provider/backend types; the core assembly no longer carries those implementations.
+- Azure OIDC credentials are Terraform provider/backend configuration credentials only and intentionally do not expose an Azure SDK `TokenCredential`. Azure Blob backend container creation can be skipped for these credentials with `validateContainer: false`.
 - `src/TF/Model/*` is still only lightly exercised. In particular, `src/TF/Model/Plan.cs` does not currently line up with the full current `terraform show -json` plan document shape and should not be treated as the canonical show model yet.
 
 ## Direction For Provider Mapping Work
@@ -107,6 +124,7 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - Prefer explicit failures over silent fallback behavior.
 - Keep provider binding logic deterministic so the generated runtime config is the single source of truth for that run.
 - Keep Terraform scratch artifacts such as the managed plan file hidden behind the `Terraform` API rather than exposing file paths to callers.
+- Callers that enforce protected-plan gates should call `Plan()`, `Show(deleteManagedPlan: false)`, then `ApplyPlan()` so inspection and apply use the same plan artifact.
 - Keep raw Terraform event-stream details behind canonical parsing and transformed command results; callers should consume logical operation results rather than JSONL message envelopes.
 - When a Terraform value needs to survive beyond the raw JSON/HCL boundary, represent it as `TFValue`, not `object`, `dynamic`, or `JsonElement`.
 - When Terraform type information needs to survive beyond the raw JSON boundary, represent it as `TFType`, not raw strings or ad hoc JSON arrays.
@@ -114,7 +132,6 @@ Last updated: 2026-04-21 (Australia/Sydney)
 ## Outstanding Follow-Up
 - Decide whether package dependency upgrades should be done before or after the provider mapping work.
 - Add an end-to-end Terraform integration test for aliased providers once a stable sample configuration is in place.
-- Decide whether the new Azure backend assembly should become a separately published package or stay as a solution-level assembly only.
 - Decide whether the old `src/TF/Model/*` plan/show-related classes should be updated to match the current Terraform JSON schema and folded into `ShowResult`, or removed if the raw `TFValue` document surface is the intended public API.
 - Decide whether `TFType` should eventually also drive validation/coercion helpers for `Variables` and other user-supplied input.
 
@@ -122,6 +139,6 @@ Last updated: 2026-04-21 (Australia/Sydney)
 - `src/TF/Terraform.cs` assembles command arguments inline; command construction is not yet modeled as strongly typed command objects.
 - Test coverage is still fairly thin on `main`, even after the provider rewrite unit tests.
 - The provider rewriter currently hand-parses HCL instead of using a dedicated parser library.
-- Packaging and release flow still assume a single main package; the new provider/backend assemblies are solution-level splits but not yet a finalized multi-package publishing model.
+- Packaging and release flow now emits multiple packages, but package metadata/readmes for the provider assemblies are still minimal.
 - `TFValue` currently models arrays/objects/scalars/null cleanly, but higher-order Terraform-specific states such as unknown values or first-class expression ASTs are not yet modeled beyond `TFExpression` string preservation.
 - `TFType` currently models Terraform constraints and output type metadata, but it is not yet integrated into value validation or conversion rules beyond parsing/serialization.
