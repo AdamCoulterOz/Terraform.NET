@@ -14,6 +14,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.15.1'
       - run: dotnet test Terraform.NET.slnx --configuration Release
 
       - run: dotnet pack Terraform.NET.slnx --configuration Release --no-build --output artifacts/packages
