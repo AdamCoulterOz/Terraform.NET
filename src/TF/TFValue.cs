@@ -378,6 +378,12 @@ public sealed class TFExpression(string value) : TFValue<string>(value)
 {
 	public override TFValueKind Kind => TFValueKind.Expression;
 
+	public static TFExpression Interpolation(string expression)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(expression);
+		return new TFExpression($"${{{expression}}}");
+	}
+
 	public override TFValue DeepClone() => new TFExpression(Value);
 
 	public override JsonNode ToJsonNode()

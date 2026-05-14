@@ -8,7 +8,7 @@ Last updated: 2026-05-14 (Australia/Sydney)
 ## Current Baseline
 - Default branch: `main`
 - Runtime target: `.NET 10` (`src/TF/TF.csproj`)
-- Current package release line: `1.0.0-preview`
+- Current package release line: `1.0.0-preview.2`
 - Verification status on `main`:
   - `dotnet test Terraform.NET.slnx --configuration Release` passes
   - `dotnet restore src/TF/TF.csproj` is clean after replacing the deprecated Fluent ARM package
@@ -27,6 +27,11 @@ Last updated: 2026-05-14 (Australia/Sydney)
 - Variable serialization: `src/TF/Variables.cs`
 - Terraform value system: `src/TF/TFValue.cs`
 - Terraform type-constraint system: `src/TF/TFType.cs`
+- Terraform JSON composition helpers:
+  - `src/TF/TerraformJsonDocument.cs`
+  - `src/TF/TerraformLabel.cs`
+- Terraform plan review helpers:
+  - `src/TF/TerraformPlanReview.cs`
 - CLI configuration file writer: `src/TF/Configuration.cs`
 - Typed command result and projection models:
   - `src/TF/CommandJsonResult.cs`
@@ -96,9 +101,16 @@ Last updated: 2026-05-14 (Australia/Sydney)
 - `TFValue` is JSON-convertible in both directions, so the same type is used for:
   - `Variables`
   - provider binding/config rewrite
+  - Terraform JSON document generation helpers
   - command-response output values and resource keys
   - remaining plan/show model payloads in `src/TF/Model/*`
 - The value model is intended to be the in-memory representation. `JsonNode`/`JsonObject` now exist only at the JSON file boundary in the provider rewriter and in the converter internals.
+
+## Terraform JSON and Plan Review Helpers
+- `TerraformJsonDocument` is the generic builder for `.tf.json`-shaped documents. It owns standard `data`, `resource`, `module`, and `output` block sets and stores payloads as `TFValue` so Terraform expressions and nested values serialize through the core value model.
+- `TerraformLabel` owns Terraform-safe label normalization for generated resources.
+- `TerraformPlanReview` projects `terraform show -json` resource changes into stable review records and supports caller-owned protected-resource policies.
+- Consumers such as Platform and CrmProxy own their domain projections and protection policies; `Terraform.NET` owns only the generic Terraform document/plan mechanics.
 
 ## Provider Alias Model (Current)
 - Providers are stored in `ProviderCollection` under `(alias, provider)` keys.
