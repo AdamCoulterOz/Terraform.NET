@@ -9,4 +9,6 @@ public abstract class Provider(Credential credential)
 		internal Dictionary<string, TFValue> GetTerraformConfig()
 			=> Credential.TFValues().AppendDictionary(this.TFValues());
 		public abstract string Name { get; }
+		public virtual string Source => $"hashicorp/{Name}";
+		public virtual string? VersionConstraint => null;
 	}

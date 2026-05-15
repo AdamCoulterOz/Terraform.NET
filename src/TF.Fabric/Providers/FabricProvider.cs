@@ -8,4 +8,5 @@ public class FabricProvider(FabricOidcCredential credential, bool preview = true
     public bool Preview { get; } = preview;
 
     public override string Name => "fabric";
+    public override string Source => "microsoft/fabric";
 }

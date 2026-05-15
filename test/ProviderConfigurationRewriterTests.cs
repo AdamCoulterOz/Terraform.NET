@@ -57,6 +57,7 @@ resource ""null_resource"" ""example"" {}");
 		rewrittenRoot.Should().Contain("resource \"null_resource\" \"example\" {}");
 
 		var generated = JsonNode.Parse(File.ReadAllText(Path.Join(_root.FullName, ProviderConfigurationRewriter.GeneratedFileName)))!;
+		generated["terraform"]!["required_providers"]!["azurerm"]!["source"]!.GetValue<string>().Should().Be("hashicorp/azurerm");
 		var blocks = generated["provider"]!["azurerm"]!.AsArray();
 		blocks.Should().HaveCount(2);
 
@@ -101,9 +102,26 @@ resource ""null_resource"" ""example"" {}");
 		rewrittenRoot["resource"]!["null_resource"]!["example"].Should().NotBeNull();
 
 		var generated = JsonNode.Parse(File.ReadAllText(Path.Join(_root.FullName, ProviderConfigurationRewriter.GeneratedFileName)))!;
+		generated["terraform"]!["required_providers"]!["azurerm"]!["source"]!.GetValue<string>().Should().Be("hashicorp/azurerm");
 		var azurerm = generated["provider"]!["azurerm"]!;
 		azurerm["features"].Should().BeOfType<JsonObject>();
 		azurerm["skip_provider_registration"]!.GetValue<bool>().Should().BeTrue();
+	}
+
+	[Fact]
+	public void Rewrite_ShouldEmitBoundProviderSourceAddresses()
+	{
+		var providers = new ProviderCollection();
+		providers.SetDefault(new AzApiProvider(new AzureSPSecretCredential(
+			Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+			Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+			"secret")));
+
+		ProviderConfigurationRewriter.Rewrite(_root, providers);
+
+		var generated = JsonNode.Parse(File.ReadAllText(Path.Join(_root.FullName, ProviderConfigurationRewriter.GeneratedFileName)))!;
+		generated["terraform"]!["required_providers"]!["azapi"]!["source"]!.GetValue<string>().Should().Be("azure/azapi");
+		generated["provider"]!["azapi"]!["tenant_id"]!.GetValue<string>().Should().Be("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 	}
 
 	[Fact]

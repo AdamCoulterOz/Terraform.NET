@@ -5,4 +5,5 @@ namespace TF.Azure.Providers;
 public class AzApiProvider(AzureCredential credential) : Provider(credential)
 {
     public override string Name => "azapi";
+    public override string Source => "azure/azapi";
 }

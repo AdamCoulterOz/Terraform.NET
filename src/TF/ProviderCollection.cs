@@ -27,6 +27,8 @@ public class ProviderCollection
         => Aliases.Select(pair => new ProviderBinding(
             pair.Key.provider,
             pair.Key.alias,
+            pair.Value.Source,
+            pair.Value.VersionConstraint,
             pair.Value.GetTerraformConfig()));
 
     private void SetAliasInternal(string alias, Provider provider)
@@ -37,4 +39,4 @@ public class ProviderCollection
     }
 }
 
-internal sealed record ProviderBinding(string ProviderName, string Alias, Dictionary<string, TFValue> Settings);
+internal sealed record ProviderBinding(string ProviderName, string Alias, string Source, string? VersionConstraint, Dictionary<string, TFValue> Settings);

@@ -8,7 +8,7 @@ Last updated: 2026-05-14 (Australia/Sydney)
 ## Current Baseline
 - Default branch: `main`
 - Runtime target: `.NET 10` (`src/TF/TF.csproj`)
-- Current package release line: `1.0.0-preview.3`
+- Current package release line: `1.0.0-preview.4`
 - Verification status on `main`:
   - `dotnet test Terraform.NET.slnx --configuration Release` passes
   - `dotnet restore src/TF/TF.csproj` is clean after replacing the deprecated Fluent ARM package
@@ -117,6 +117,7 @@ Last updated: 2026-05-14 (Australia/Sydney)
 - `ProviderConfigurationRewriter` scans the root execution workspace for provider blocks in `.tf` and `.tf.json` files.
 - Extracted provider settings are merged with bound provider values from `ProviderCollection`.
 - The final resolved provider configuration is written to `providers.auto.tf.json`.
+- Generated provider configuration also includes `terraform.required_providers` source addresses from provider bindings so callers do not hard-code facet/provider sources in their root modules.
 - Combined provider environment values are merged deterministically and tolerate duplicate keys only when the values match.
 - Original provider blocks are removed from the copied root files so the generated file is the single source of truth for that run.
 

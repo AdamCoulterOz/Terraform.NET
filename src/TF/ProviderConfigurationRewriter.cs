@@ -47,8 +47,13 @@ internal static class ProviderConfigurationRewriter
 			var key = (binding.ProviderName, NormalizeAlias(binding.Alias));
 			if (!merged.TryGetValue(key, out var block))
 			{
-				block = new ProviderConfigBlock(binding.ProviderName, key.Item2, new TFObject());
+				block = new ProviderConfigBlock(binding.ProviderName, key.Item2, binding.Source, binding.VersionConstraint, new TFObject());
 				merged.Add(key, block);
+			}
+			else
+			{
+				block.Source = binding.Source;
+				block.VersionConstraint = binding.VersionConstraint;
 			}
 
 			foreach (var (name, value) in binding.Settings)
@@ -69,6 +74,7 @@ internal static class ProviderConfigurationRewriter
 		}
 
 		var providerObject = new JsonObject();
+		var requiredProviders = new JsonObject();
 		foreach (var providerGroup in mergedBlocks.Values
 					 .OrderBy(block => block.ProviderName, StringComparer.Ordinal)
 					 .ThenBy(block => block.Alias == ProviderCollection.DefaultAlias ? string.Empty : block.Alias, StringComparer.Ordinal)
@@ -76,10 +82,15 @@ internal static class ProviderConfigurationRewriter
 		{
 			var blocks = providerGroup.Select(ToJsonBlock).ToList();
 			providerObject[providerGroup.Key] = blocks.Count == 1 ? blocks[0] : new JsonArray(blocks.ToArray());
+			requiredProviders[providerGroup.Key] = RequiredProviderBlock(providerGroup.First());
 		}
 
 		var root = new JsonObject
 		{
+			["terraform"] = new JsonObject
+			{
+				["required_providers"] = requiredProviders
+			},
 			["provider"] = providerObject
 		};
 
@@ -92,6 +103,17 @@ internal static class ProviderConfigurationRewriter
 			?? throw new InvalidOperationException($"Provider block '{block.ProviderName}' did not serialize to a JSON object.");
 		if (block.Alias != ProviderCollection.DefaultAlias)
 			json["alias"] = block.Alias;
+		return json;
+	}
+
+	private static JsonObject RequiredProviderBlock(ProviderConfigBlock block)
+	{
+		var json = new JsonObject
+		{
+			["source"] = block.Source
+		};
+		if (!string.IsNullOrWhiteSpace(block.VersionConstraint))
+			json["version"] = block.VersionConstraint;
 		return json;
 	}
 
@@ -149,7 +171,7 @@ internal static class ProviderConfigurationRewriter
 	{
 		var settings = (TFObject)providerBlock.DeepClone();
 		var alias = ReadAndRemoveAlias(settings, providerName, fileName);
-		return new ProviderConfigBlock(providerName, alias, settings);
+		return new ProviderConfigBlock(providerName, alias, ProviderSource(providerName), null, settings);
 	}
 
 	private static void WriteJsonRemainder(FileInfo file, TFObject rootObject)
@@ -177,7 +199,7 @@ internal static class ProviderConfigurationRewriter
 		{
 			var settings = HclBodyParser.Parse(match.Body);
 			var alias = ReadAndRemoveAlias(settings, match.ProviderName, file.Name);
-			extractedBlocks.Add(new ProviderConfigBlock(match.ProviderName, alias, settings));
+			extractedBlocks.Add(new ProviderConfigBlock(match.ProviderName, alias, ProviderSource(match.ProviderName), null, settings));
 		}
 
 		var updated = RemoveSpans(content, matches.Select(match => match.Span).OrderByDescending(span => span.Start));
@@ -213,7 +235,13 @@ internal static class ProviderConfigurationRewriter
 	private static string DisplayAlias(string alias)
 		=> alias == ProviderCollection.DefaultAlias ? "<default>" : alias;
 
-	private sealed record ProviderConfigBlock(string ProviderName, string Alias, TFObject Settings);
+	private static string ProviderSource(string providerName) => $"hashicorp/{providerName}";
+
+	private sealed record ProviderConfigBlock(string ProviderName, string Alias, string Source, string? VersionConstraint, TFObject Settings)
+	{
+		public string Source { get; set; } = Source;
+		public string? VersionConstraint { get; set; } = VersionConstraint;
+	}
 	private sealed record TextSpan(int Start, int Length);
 	private sealed record ProviderBlockMatch(string ProviderName, string Body, TextSpan Span);
 

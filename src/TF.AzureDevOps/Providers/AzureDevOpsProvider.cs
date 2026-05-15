@@ -6,4 +6,5 @@ public class AzureDevOpsProvider(Uri organizationUrl, Credential credential) : P
     public Uri OrganizationUrl { get; } = organizationUrl;
 
     public override string Name => "azuredevops";
+    public override string Source => "microsoft/azuredevops";
 }
