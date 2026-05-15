@@ -114,7 +114,10 @@ internal static class ProviderConfigurationRewriter
 		if (TFValue.FromJsonNode(rootNode) is not TFObject rootObject)
 			return;
 
-		if (rootObject["provider"] is not TFObject providersObject)
+		if (!rootObject.TryGetValue("provider", out var providerValue))
+			return;
+
+		if (providerValue is not TFObject providersObject)
 			return;
 
 		foreach (var providerEntry in providersObject.ToList())

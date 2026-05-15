@@ -106,6 +106,25 @@ resource ""null_resource"" ""example"" {}");
 		azurerm["skip_provider_registration"]!.GetValue<bool>().Should().BeTrue();
 	}
 
+	[Fact]
+	public void Rewrite_ShouldIgnoreTerraformJsonWithoutProviderBlock()
+	{
+		var rootConfig = Path.Join(_root.FullName, "root.tf.json");
+		File.WriteAllText(rootConfig, @"{
+  ""resource"": {
+    ""null_resource"": {
+      ""example"": {}
+    }
+  }
+}");
+
+		ProviderConfigurationRewriter.Rewrite(_root, new ProviderCollection());
+
+		var rewrittenRoot = JsonNode.Parse(File.ReadAllText(rootConfig))!;
+		rewrittenRoot["resource"]!["null_resource"]!["example"].Should().NotBeNull();
+		File.Exists(Path.Join(_root.FullName, ProviderConfigurationRewriter.GeneratedFileName)).Should().BeFalse();
+	}
+
 	public void Dispose()
 	{
 		if (_root.Exists)
