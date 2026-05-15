@@ -2,6 +2,8 @@ using System.Text.Json.Nodes;
 using FluentAssertions;
 using TF.Azure.Credentials;
 using TF.Azure.Providers;
+using TF.PowerPlatform.Credentials;
+using TF.PowerPlatform.Providers;
 using Xunit;
 
 namespace TF.Tests.Unit;
@@ -125,6 +127,38 @@ resource ""null_resource"" ""example"" {}");
 	}
 
 	[Fact]
+	public void Rewrite_ShouldUseProviderSpecificOidcFieldNames()
+	{
+		var tenantId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+		var clientId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+		var providers = new ProviderCollection();
+		providers.SetAlias("azapi", new AzApiProvider(new AzureOidcCredential(
+			tenantId,
+			clientId,
+			oidcRequestToken: "request-token",
+			oidcRequestUrl: new Uri("https://pipelines.example.test/oidc"),
+			azureDevOpsServiceConnectionId: "service-connection")));
+		providers.SetAlias("power", new PowerPlatformProvider(new PowerPlatformOidcCredential(
+			tenantId,
+			clientId,
+			oidcRequestUri: new Uri("https://pipelines.example.test/oidc"),
+			azureDevOpsServiceConnectionId: "service-connection")));
+
+		ProviderConfigurationRewriter.Rewrite(_root, providers);
+
+		var generated = JsonNode.Parse(File.ReadAllText(Path.Join(_root.FullName, ProviderConfigurationRewriter.GeneratedFileName)))!;
+		var azapi = ProviderBlock(generated, "azapi");
+		azapi["oidc_request_url"]!.GetValue<string>().Should().Be("https://pipelines.example.test/oidc");
+		azapi["ado_pipeline_service_connection_id"].Should().BeNull();
+
+		var powerPlatform = ProviderBlock(generated, "power-platform");
+		powerPlatform["oidc_request_url"]!.GetValue<string>().Should().Be("https://pipelines.example.test/oidc");
+		powerPlatform["azdo_service_connection_id"]!.GetValue<string>().Should().Be("service-connection");
+		powerPlatform["oidc_request_uri"].Should().BeNull();
+		powerPlatform["ado_service_connection_id"].Should().BeNull();
+	}
+
+	[Fact]
 	public void Rewrite_ShouldIgnoreTerraformJsonWithoutProviderBlock()
 	{
 		var rootConfig = Path.Join(_root.FullName, "root.tf.json");
@@ -147,5 +181,11 @@ resource ""null_resource"" ""example"" {}");
 	{
 		if (_root.Exists)
 			_root.Delete(true);
+	}
+
+	private static JsonNode ProviderBlock(JsonNode generated, string providerName)
+	{
+		var provider = generated["provider"]![providerName]!;
+		return provider is JsonArray array ? array.Single()! : provider;
 	}
 }

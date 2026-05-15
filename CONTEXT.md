@@ -8,7 +8,7 @@ Last updated: 2026-05-14 (Australia/Sydney)
 ## Current Baseline
 - Default branch: `main`
 - Runtime target: `.NET 10` (`src/TF/TF.csproj`)
-- Current package release line: `1.0.0-preview.4`
+- Current package release line: `1.0.0-preview.5`
 - Verification status on `main`:
   - `dotnet test Terraform.NET.slnx --configuration Release` passes
   - `dotnet restore src/TF/TF.csproj` is clean after replacing the deprecated Fluent ARM package

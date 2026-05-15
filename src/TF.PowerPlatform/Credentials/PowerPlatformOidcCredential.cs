@@ -19,9 +19,9 @@ public class PowerPlatformOidcCredential(
     [Terraform("oidc_token", "POWER_PLATFORM_OIDC_TOKEN")]
     public string? OidcToken { get; } = oidcToken;
 
-    [Terraform("oidc_request_uri", "POWER_PLATFORM_OIDC_REQUEST_URI")]
+    [Terraform("oidc_request_url", "POWER_PLATFORM_OIDC_REQUEST_URL")]
     public Uri? OidcRequestUri { get; } = oidcRequestUri;
 
-    [Terraform("ado_service_connection_id", "POWER_PLATFORM_AZDO_SERVICE_CONNECTION_ID")]
+    [Terraform("azdo_service_connection_id", "POWER_PLATFORM_AZDO_SERVICE_CONNECTION_ID")]
     public string? AzureDevOpsServiceConnectionId { get; } = azureDevOpsServiceConnectionId;
 }
