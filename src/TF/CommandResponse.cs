@@ -606,6 +606,7 @@ internal static partial class CommandResponseParser
 		=> value switch
 		{
 			"no-op" => ResourceAction.NoOp,
+			"noop" => ResourceAction.NoOp,
 			"create" => ResourceAction.Create,
 			"read" => ResourceAction.Read,
 			"update" => ResourceAction.Update,

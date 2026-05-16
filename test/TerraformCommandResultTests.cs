@@ -53,7 +53,7 @@ public class TerraformCommandResultTests
 			        {"@level":"info","@message":"random_pet.animal: Drift detected (update)","type":"resource_drift","change":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"update"}}
 			        {"@level":"info","@message":"random_pet.animal: Plan to create","type":"planned_change","change":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"create"}}
 			        {"@level":"info","@message":"Plan: 1 to add, 0 to change, 0 to destroy.","type":"change_summary","changes":{"add":1,"change":0,"remove":0,"operation":"plan"}}
-			        {"@level":"info","@message":"Outputs: 1","type":"outputs","outputs":{"pets":{"sensitive":false,"type":"string","action":"create"}}}
+			        {"@level":"info","@message":"Outputs: 2","type":"outputs","outputs":{"pets":{"sensitive":false,"type":"string","action":"create"},"unchanged":{"sensitive":false,"action":"noop"}}}
 			        """,
 			error: string.Empty,
 			exitCode: 2)
@@ -78,6 +78,8 @@ public class TerraformCommandResultTests
 		result.Outputs.Should().ContainKey("pets");
 		result.Outputs["pets"].Action.Should().Be(ResourceAction.Create);
 		result.Outputs["pets"].Type.Should().Be(TFStringType.Instance);
+		result.Outputs.Should().ContainKey("unchanged");
+		result.Outputs["unchanged"].Action.Should().Be(ResourceAction.NoOp);
 	}
 
 	[Fact]
