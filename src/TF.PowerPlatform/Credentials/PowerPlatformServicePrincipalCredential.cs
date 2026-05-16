@@ -1,6 +1,6 @@
 namespace TF.PowerPlatform.Credentials;
 
-public class PowerPlatformServicePrincipalCredential(Guid tenantId, Guid clientId, string clientSecret) : Credential
+public class PowerPlatformServicePrincipalCredential(Guid tenantId, Guid clientId, string clientSecret) : Credential, IEntraCredential
 {
     [Terraform("tenant_id", "POWER_PLATFORM_TENANT_ID")]
     public Guid TenantId { get; } = tenantId;

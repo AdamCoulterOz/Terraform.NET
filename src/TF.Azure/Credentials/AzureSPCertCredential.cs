@@ -13,7 +13,7 @@ namespace TF.Azure.Credentials;
 ///         on how to setup a certificate credential
 ///     </see>
 /// </summary>
-public class AzureSPCertCredential : AzureCredential
+public class AzureSPCertCredential : AzureCredential, IEntraCredential
 {
 	/// <param name="tenantId">Azure Organisation (tenant) Id</param>
 	/// <param name="clientId">Azure AD Application Client Id</param>
@@ -44,4 +44,6 @@ public class AzureSPCertCredential : AzureCredential
 
 	public override TokenCredential TokenCredential
 		=> new ClientCertificateCredential(TenantId.ToString(), ClientId.ToString(), Certificate);
+
+	Guid IEntraCredential.ClientId => ClientId ?? throw new InvalidOperationException("Azure certificate credentials always require a client id.");
 }

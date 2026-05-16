@@ -57,6 +57,42 @@ public class ProviderAuthTests
     }
 
     [Fact]
+    public void EntraOidcCredentials_ShouldExposeSharedSemanticAuthShape()
+    {
+        var tenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var clientId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+        IEntraOidcCredential azure = new AzureOidcCredential(
+            tenantId,
+            clientId,
+            oidcRequestToken: "request-token",
+            oidcRequestUrl: new Uri("https://pipelines.example.test/oidc"),
+            azureDevOpsServiceConnectionId: "service-connection");
+        IEntraOidcCredential fabric = new FabricOidcCredential(tenantId, clientId, oidcToken: "fabric-token");
+        IEntraOidcCredential powerPlatform = new PowerPlatformOidcCredential(
+            tenantId,
+            clientId,
+            oidcToken: "power-token",
+            oidcRequestUri: new Uri("https://pipelines.example.test/power-oidc"),
+            azureDevOpsServiceConnectionId: "power-service-connection");
+
+        azure.TenantId.Should().Be(tenantId);
+        azure.ClientId.Should().Be(clientId);
+        azure.UseOidc.Should().BeTrue();
+        azure.OidcRequestToken.Should().Be("request-token");
+        azure.OidcRequestUrl.Should().Be(new Uri("https://pipelines.example.test/oidc"));
+        azure.AzureDevOpsServiceConnectionId.Should().Be("service-connection");
+
+        fabric.OidcToken.Should().Be("fabric-token");
+        fabric.OidcRequestUrl.Should().BeNull();
+        fabric.AzureDevOpsServiceConnectionId.Should().BeNull();
+
+        powerPlatform.OidcToken.Should().Be("power-token");
+        powerPlatform.OidcRequestUrl.Should().Be(new Uri("https://pipelines.example.test/power-oidc"));
+        powerPlatform.AzureDevOpsServiceConnectionId.Should().Be("power-service-connection");
+    }
+
+    [Fact]
     public void Terraform_ShouldNotDeleteExternalWorkingDirectory()
     {
         var directory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));

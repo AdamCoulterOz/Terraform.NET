@@ -5,7 +5,7 @@ public class PowerPlatformOidcCredential(
     Guid clientId,
     string? oidcToken = null,
     Uri? oidcRequestUri = null,
-    string? azureDevOpsServiceConnectionId = null) : Credential
+    string? azureDevOpsServiceConnectionId = null) : Credential, IEntraOidcCredential
 {
     [Terraform("tenant_id", "POWER_PLATFORM_TENANT_ID")]
     public Guid TenantId { get; } = tenantId;
@@ -24,4 +24,8 @@ public class PowerPlatformOidcCredential(
 
     [Terraform("azdo_service_connection_id", "POWER_PLATFORM_AZDO_SERVICE_CONNECTION_ID")]
     public string? AzureDevOpsServiceConnectionId { get; } = azureDevOpsServiceConnectionId;
+
+    string? IEntraOidcCredential.OidcRequestToken => null;
+
+    Uri? IEntraOidcCredential.OidcRequestUrl => OidcRequestUri;
 }

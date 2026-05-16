@@ -83,6 +83,41 @@ public class TerraformCommandResultTests
 	}
 
 	[Fact]
+	public void TerraformCommandResponseParser_ShouldParseFullerPlanJsonUiStream_WithNoopOutputActions()
+	{
+		var response = TerraformCommandResponseParser.ParseJsonUiStream(
+			"""
+			{"@level":"info","@message":"Terraform 1.11.0","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:00.000000Z","type":"version","terraform":"1.11.0","ui":"1.2"}
+			{"@level":"info","@message":"module.crm.powerplatform_environment.environment: Refreshing state... [id=00000000-0000-0000-0000-000000000001]","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:01.000000Z","type":"refresh_start","hook":{"resource":{"addr":"module.crm.powerplatform_environment.environment","module":"module.crm","resource":"powerplatform_environment.environment","implied_provider":"power-platform","resource_type":"powerplatform_environment","resource_name":"environment","resource_key":null},"id_key":"id","id_value":"00000000-0000-0000-0000-000000000001"}}
+			{"@level":"info","@message":"module.crm.powerplatform_environment.environment: Refresh complete [id=00000000-0000-0000-0000-000000000001]","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:02.000000Z","type":"refresh_complete","hook":{"resource":{"addr":"module.crm.powerplatform_environment.environment","module":"module.crm","resource":"powerplatform_environment.environment","implied_provider":"power-platform","resource_type":"powerplatform_environment","resource_name":"environment","resource_key":null},"id_key":"id","id_value":"00000000-0000-0000-0000-000000000001"}}
+			{"@level":"info","@message":"module.api.azurerm_resource_group.main: Drift detected (update)","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:03.000000Z","type":"resource_drift","change":{"resource":{"addr":"module.api.azurerm_resource_group.main","module":"module.api","resource":"azurerm_resource_group.main","implied_provider":"azurerm","resource_type":"azurerm_resource_group","resource_name":"main","resource_key":null},"action":"update","reason":"read_because_config_unknown"}}
+			{"@level":"info","@message":"module.crm.powerplatform_solution.solution: Plan to update","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:04.000000Z","type":"planned_change","change":{"resource":{"addr":"module.crm.powerplatform_solution.solution","module":"module.crm","resource":"powerplatform_solution.solution","implied_provider":"power-platform","resource_type":"powerplatform_solution","resource_name":"solution","resource_key":null},"action":"update","reason":"attribute_changed"}}
+			{"@level":"info","@message":"module.api.azurerm_key_vault_secret.setting[\"crm_url\"]: Plan to create","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:05.000000Z","type":"planned_change","change":{"resource":{"addr":"module.api.azurerm_key_vault_secret.setting[\"crm_url\"]","module":"module.api","resource":"azurerm_key_vault_secret.setting","implied_provider":"azurerm","resource_type":"azurerm_key_vault_secret","resource_name":"setting","resource_key":"crm_url"},"previous_resource":{"addr":"module.api.azurerm_key_vault_secret.old_setting[\"crm_url\"]","module":"module.api","resource":"azurerm_key_vault_secret.old_setting","implied_provider":"azurerm","resource_type":"azurerm_key_vault_secret","resource_name":"old_setting","resource_key":"crm_url"},"action":"create","reason":"replace_because_cannot_update"}}
+			{"@level":"info","@message":"Outputs: 3","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:06.000000Z","type":"outputs","outputs":{"crm_environment_url":{"sensitive":false,"type":"string","value":"https://org.crm6.dynamics.com","action":"noop"},"crm_solution_id":{"sensitive":false,"type":"string","action":"noop"},"api_endpoint":{"sensitive":false,"type":["object",{"url":"string","ready":"bool"}],"value":{"url":"https://api.example.test","ready":true},"action":"update"}}}
+			{"@level":"info","@message":"Plan: 1 to add, 1 to change, 0 to destroy.","@module":"terraform.ui","@timestamp":"2026-05-16T05:01:07.000000Z","type":"change_summary","changes":{"add":1,"change":1,"remove":0,"import":0,"forget":0,"operation":"plan"}}
+			""");
+
+		response.TerraformVersion.Should().Be("1.11.0");
+		response.UiVersion.Should().Be("1.2");
+		response.RefreshOperations.Should().HaveCount(2);
+		response.ResourceDrifts.Should().ContainSingle();
+		response.ResourceDrifts.Single().Reason.Should().Be("read_because_config_unknown");
+		response.PlannedChanges.Should().HaveCount(2);
+		response.PlannedChanges.Select(change => change.Action).Should().Contain([ResourceAction.Update, ResourceAction.Create]);
+		response.PlannedChanges.Last().PreviousResource.Should().NotBeNull();
+		response.PlannedChanges.Last().Resource.ResourceKey!.GetValue<string>().Should().Be("crm_url");
+		response.Outputs.Should().ContainKey("crm_environment_url");
+		response.Outputs["crm_environment_url"].Action.Should().Be(ResourceAction.NoOp);
+		response.Outputs["crm_environment_url"].Value!.GetValue<string>().Should().Be("https://org.crm6.dynamics.com");
+		response.Outputs["crm_solution_id"].Action.Should().Be(ResourceAction.NoOp);
+		response.Outputs["crm_solution_id"].Type.Should().Be(TFStringType.Instance);
+		response.Outputs["api_endpoint"].Type.Should().BeOfType<TFObjectType>();
+		response.ChangeSummary!.Add.Should().Be(1);
+		response.ChangeSummary.Change.Should().Be(1);
+		response.ChangeSummary.Operation.Should().Be(CommandOperation.Plan);
+	}
+
+	[Fact]
 	public void InitResult_ShouldTransformKnownInitOutput()
 	{
 		var raw = new TFResult(

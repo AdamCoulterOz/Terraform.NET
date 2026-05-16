@@ -12,7 +12,7 @@ public abstract class OperationResult : CommandJsonResult
 
 	protected sealed override void LoadJson(string? output, JsonSerializerOptions options)
 	{
-		var response = CommandResponseParser.Parse(output, options);
+		var response = TerraformCommandResponseParser.ParseJsonUiStream(output, options);
 		TerraformVersion = response.TerraformVersion;
 		UiVersion = response.UiVersion;
 		Diagnostics = response.Diagnostics;

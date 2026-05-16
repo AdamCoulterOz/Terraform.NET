@@ -8,7 +8,7 @@ public class AzureOidcCredential(
     string? oidcToken = null,
     string? oidcRequestToken = null,
     Uri? oidcRequestUrl = null,
-    string? azureDevOpsServiceConnectionId = null) : AzureCredential(tenantId, clientId)
+    string? azureDevOpsServiceConnectionId = null) : AzureCredential(tenantId, clientId), IEntraOidcCredential
 {
     [Terraform("use_oidc", "ARM_USE_OIDC")]
     public bool UseOidc => true;
@@ -27,4 +27,6 @@ public class AzureOidcCredential(
 
     public override TokenCredential TokenCredential =>
         throw new NotSupportedException("Azure OIDC credentials are intended for Terraform provider/backend environment configuration and do not expose an Azure SDK TokenCredential.");
+
+    Guid IEntraCredential.ClientId => ClientId ?? throw new InvalidOperationException("Azure OIDC credentials always require a client id.");
 }

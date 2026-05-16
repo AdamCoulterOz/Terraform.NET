@@ -4,6 +4,17 @@ using System.Text.RegularExpressions;
 
 namespace TF;
 
+public static class TerraformCommandResponseParser
+{
+	private static readonly JsonSerializerOptions DefaultOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+
+	public static CommandResponse ParseJsonUiStream(string? output)
+		=> CommandResponseParser.Parse(output, DefaultOptions);
+
+	public static CommandResponse ParseJsonUiStream(string? output, JsonSerializerOptions options)
+		=> CommandResponseParser.Parse(output, options);
+}
+
 public sealed class CommandResponse
 {
 	public string? TerraformVersion { get; init; }

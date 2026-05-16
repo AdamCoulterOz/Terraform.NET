@@ -10,11 +10,13 @@ namespace TF.Azure.Credentials;
 /// <param name="tenantId">Azure Organisation (tenant) Id</param>
 /// <param name="clientId">Azure AD Application Client Id</param>
 /// <param name="clientSecret">Azure AD Application Client Secret</param>
-public class AzureSPSecretCredential(Guid tenantId, Guid clientId, string clientSecret) : AzureCredential(tenantId, clientId)
+public class AzureSPSecretCredential(Guid tenantId, Guid clientId, string clientSecret) : AzureCredential(tenantId, clientId), IEntraCredential
 {
     [Terraform("client_secret", "ARM_CLIENT_SECRET")]
     public string ClientSecret { get; set; } = clientSecret;
 
     public override TokenCredential TokenCredential
 		=> new ClientSecretCredential(TenantId.ToString(), ClientId.ToString(), ClientSecret.ToString());
+
+    Guid IEntraCredential.ClientId => ClientId ?? throw new InvalidOperationException("Azure service-principal credentials always require a client id.");
 }

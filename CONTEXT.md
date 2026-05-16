@@ -1,6 +1,6 @@
 # Terraform.NET Context
 
-Last updated: 2026-05-14 (Australia/Sydney)
+Last updated: 2026-05-16 (Australia/Sydney)
 
 ## Project Purpose
 `Terraform.NET` is a .NET wrapper around the Terraform CLI. It creates a temporary working directory, can write Terraform configuration inputs into that workspace, runs Terraform commands through `CliWrap`, and projects Terraform JSON output into typed, operation-specific .NET results.
@@ -8,9 +8,10 @@ Last updated: 2026-05-14 (Australia/Sydney)
 ## Current Baseline
 - Default branch: `main`
 - Runtime target: `.NET 10` (`src/TF/TF.csproj`)
-- Current package release line: `1.0.0-preview.5`
+- Current package release line: `1.0.0-preview.7`
+- Current SCH consumer minimum: `1.0.0-preview.6`. Do not lower SCH pins or consumer guidance below this line. Because older stable package versions can still participate in NuGet restore resolution, SCH consumers should keep explicit prerelease constraints for this line until the package history is clean enough to relax them intentionally.
 - Verification status on `main`:
-  - `dotnet test Terraform.NET.slnx --configuration Release` passes
+  - `dotnet test Terraform.NET.slnx --configuration Release` passes as of 2026-05-16
   - `dotnet restore src/TF/TF.csproj` is clean after replacing the deprecated Fluent ARM package
 - CI workflow now publishes from `main` in `.github/workflows/main.yml`, tests `Terraform.NET.slnx` in Release, packs all packable Terraform.NET provider assemblies, and pushes them to NuGet with `--skip-duplicate`.
 
@@ -72,14 +73,15 @@ Last updated: 2026-05-14 (Australia/Sydney)
    - resource apply/provision/refresh/ephemeral operation records
    - diagnostics and change summaries
    - enums for operation/action/severity discriminators and `TimeSpan` for elapsed durations
-8. The canonical command response is then transformed into operation-specific result objects (`InitResult`, `PlanResult`, `ApplyResult`, `DestroyResult`, `RefreshResult`).
-9. `Plan()` writes a managed scratch plan file inside the execution root.
-10. `Show()` consumes that managed plan file and returns a composite result. Callers can keep the managed plan by passing `deleteManagedPlan: false`:
+8. `TerraformCommandResponseParser.ParseJsonUiStream(...)` is the public typed parser for Terraform JSON UI streams when callers need the canonical command response directly.
+9. The canonical command response is then transformed into operation-specific result objects (`InitResult`, `PlanResult`, `ApplyResult`, `DestroyResult`, `RefreshResult`).
+10. `Plan()` writes a managed scratch plan file inside the execution root.
+11. `Show()` consumes that managed plan file and returns a composite result. Callers can keep the managed plan by passing `deleteManagedPlan: false`:
    - `Json`: the `terraform show -json` document as a `TFObject`-backed `ShowJsonResult`
    - `File`: the human-readable `terraform show` text as a `ShowFileResult`
-11. `ApplyPlan()` applies the existing managed plan file and then deletes it, allowing callers to inspect and apply the same plan.
-12. `Output()` returns typed `terraform output -json` values as `OutputValue` records.
-13. `Show<TResult>()` still exists for callers that want to deserialize only the JSON form directly into a custom type.
+12. `ApplyPlan()` applies the existing managed plan file and then deletes it, allowing callers to inspect and apply the same plan.
+13. `Output()` returns typed `terraform output -json` values as `OutputValue` records.
+14. `Show<TResult>()` still exists for callers that want to deserialize only the JSON form directly into a custom type.
 
 ## Terraform Value Model
 - Core now uses a shared `TFValue` hierarchy instead of loose `object`, `dynamic`, `JsonElement`, and `JsonValue` payloads where practical.
@@ -121,6 +123,12 @@ Last updated: 2026-05-14 (Australia/Sydney)
 - Combined provider environment values are merged deterministically and tolerate duplicate keys only when the values match.
 - Original provider blocks are removed from the copied root files so the generated file is the single source of truth for that run.
 
+## Provider Auth Model (Current)
+- Provider packages own their provider-specific Terraform field names and environment variable names.
+- Core exposes `IEntraCredential` and `IEntraOidcCredential` as the shared semantic shape for Entra-backed credentials.
+- Azure, Fabric, and Power Platform OIDC helpers implement `IEntraOidcCredential`; Azure and Power Platform service-principal helpers implement `IEntraCredential` where their client identity is non-optional.
+- The shared Entra/OIDC abstraction must not absorb provider-specific env-key naming, backend token behavior, or Azure SDK `TokenCredential` semantics. Those remain package-owned because they have different provider/runtime lifecycles.
+
 ## Current Limitations
 - The HCL extraction path is intentionally focused on provider blocks and common provider-setting expressions. If a provider block uses unsupported HCL constructs, the runtime should fail loudly rather than silently misrewrite it.
 - Tests currently cover the rewrite/merge flow directly, but not a full Terraform integration run with multiple real aliased providers.
@@ -138,15 +146,17 @@ Last updated: 2026-05-14 (Australia/Sydney)
 - Keep provider binding logic deterministic so the generated runtime config is the single source of truth for that run.
 - Keep Terraform scratch artifacts such as the managed plan file hidden behind the `Terraform` API rather than exposing file paths to callers.
 - Callers that enforce protected-plan gates should call `Plan()`, `Show(deleteManagedPlan: false)`, then `ApplyPlan()` so inspection and apply use the same plan artifact.
-- Keep raw Terraform event-stream details behind canonical parsing and transformed command results; callers should consume logical operation results rather than JSONL message envelopes.
+- Keep raw Terraform event-stream details behind canonical parsing and transformed command results; callers should consume logical operation results or the public `CommandResponse` parser rather than JSONL message envelopes.
 - When a Terraform value needs to survive beyond the raw JSON/HCL boundary, represent it as `TFValue`, not `object`, `dynamic`, or `JsonElement`.
 - When Terraform type information needs to survive beyond the raw JSON boundary, represent it as `TFType`, not raw strings or ad hoc JSON arrays.
+- Terraform variables are CLR-owned input values. `Terraform.NET` may serialize `Variables` to its internal `execute.tfvars.json`, but external `.tfvars.json` file loading is intentionally deferred unless the abstraction is rethought as CLR-owned variables rather than exposing Terraform CLI file mechanics.
 
 ## Outstanding Follow-Up
 - Decide whether package dependency upgrades should be done before or after the provider mapping work.
 - Add an end-to-end Terraform integration test for aliased providers once a stable sample configuration is in place.
 - Decide whether the old `src/TF/Model/*` plan/show-related classes should be updated to match the current Terraform JSON schema and folded into `ShowResult`, or removed if the raw `TFValue` document surface is the intended public API.
 - Decide whether `TFType` should eventually also drive validation/coercion helpers for `Variables` and other user-supplied input.
+- Revisit whether `IEntraOidcCredential` needs a richer normalized request-token model after the next provider package proves the shape, but keep provider-specific Terraform env keys out of the shared abstraction.
 
 ## Technical Debt
 - `src/TF/Terraform.cs` assembles command arguments inline; command construction is not yet modeled as strongly typed command objects.
