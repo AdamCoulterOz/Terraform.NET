@@ -169,6 +169,7 @@ public enum ResourceAction
 	Read,
 	Update,
 	Delete,
+	Replace,
 	Forget,
 	Import,
 	Move
@@ -622,6 +623,7 @@ internal static partial class CommandResponseParser
 			"read" => ResourceAction.Read,
 			"update" => ResourceAction.Update,
 			"delete" => ResourceAction.Delete,
+			"replace" => ResourceAction.Replace,
 			"forget" => ResourceAction.Forget,
 			"import" => ResourceAction.Import,
 			"move" => ResourceAction.Move,
