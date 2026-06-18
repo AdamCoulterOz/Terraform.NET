@@ -279,8 +279,18 @@ internal static partial class CommandResponseParser
 				continue;
 			}
 
-			var envelope = JsonSerializer.Deserialize<TerraformUiEnvelope>(trimmed, options)
-				?? throw new InvalidOperationException("Unable to deserialize Terraform UI output line.");
+			TerraformUiEnvelope? envelope;
+			try
+			{
+				envelope = JsonSerializer.Deserialize<TerraformUiEnvelope>(trimmed, options);
+			}
+			catch (Exception exception) when (exception is InvalidOperationException or JsonException or NotSupportedException)
+			{
+				continue;
+			}
+
+			if (envelope is null || string.IsNullOrWhiteSpace(envelope.Type))
+				continue;
 
 			if (!string.IsNullOrWhiteSpace(envelope.Message))
 				messages.Add(envelope.Message);
@@ -706,7 +716,7 @@ internal static partial class CommandResponseParser
 		[JsonPropertyName("@message")]
 		public string? Message { get; set; }
 
-		public required string Type { get; set; }
+		public string? Type { get; set; }
 
 		public string? MessageCode { get; set; }
 

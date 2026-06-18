@@ -119,6 +119,31 @@ public class TerraformCommandResultTests
 	}
 
 	[Fact]
+	public void ApplyResult_ShouldIgnoreJsonLinesWithoutTerraformUiType()
+	{
+		var raw = new TFResult(
+			success: true,
+			output: """
+			        {"@level":"info","@message":"Terraform 1.15.5","@module":"terraform.ui","type":"version","terraform":"1.15.5","ui":"1.3"}
+			        {"event":"provider-log","message":"provider emitted a JSON object outside Terraform UI"}
+			        {"@level":"info","@message":"azapi_resource.example: Creation complete after 1.25s [id=/subscriptions/000/resourceGroups/rg/providers/Microsoft.Resources/deployments/example]","@module":"terraform.ui","type":"apply_complete","hook":{"resource":{"addr":"azapi_resource.example","module":"","resource":"azapi_resource.example","implied_provider":"azapi","resource_type":"azapi_resource","resource_name":"example","resource_key":null},"action":"create","id_key":"id","id_value":"/subscriptions/000/resourceGroups/rg/providers/Microsoft.Resources/deployments/example","elapsed_seconds":1.25}}
+			        {"@level":"info","@message":"Apply complete! Resources: 1 added, 0 changed, 0 destroyed.","@module":"terraform.ui","type":"change_summary","changes":{"add":1,"change":0,"remove":0,"import":0,"forget":0,"operation":"apply"}}
+			        """,
+			error: string.Empty,
+			exitCode: 0);
+
+		var result = new ApplyResult();
+		((ITerraformCommandResult)result).LoadFromCommandResult(raw, JsonOptions);
+
+		result.Applied.Should().BeTrue();
+		result.ChangeSummary.Should().NotBeNull();
+		result.ChangeSummary!.Operation.Should().Be(CommandOperation.Apply);
+		result.ResourceOperations.Should().ContainSingle();
+		result.ResourceOperations.Single().Type.Should().Be(ResourceOperationType.ApplyComplete);
+		result.ResourceOperations.Single().Elapsed.Should().Be(TimeSpan.FromSeconds(1.25));
+	}
+
+	[Fact]
 	public void InitResult_ShouldTransformKnownInitOutput()
 	{
 		var raw = new TFResult(
