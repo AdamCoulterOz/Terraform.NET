@@ -1,5 +1,11 @@
 # Terraform.NET History
 
+## 2026-06-18: Fractional Terraform UI elapsed seconds parsed
+Terraform JSON UI hook payloads can report `elapsed_seconds` as a fractional JSON number. The command-response parser now treats elapsed seconds as a numeric value instead of an integer so successful apply streams with sub-second precision do not fail result projection.
+
+## 2026-06-08: Azure DevOps Service-Principal Credential Added
+`Terraform.NET.AzureDevOps` added an Azure DevOps provider credential for Entra service-principal client-secret authentication. This keeps Azure DevOps provider auth field names in the Azure DevOps package while allowing SCH local harness runs to use the same generated pipeline identity secret as Azure and Fabric providers instead of requiring a user PAT.
+
 ## 2026-05-14: Preview Package Family and Consumer Pinning
 `Terraform.NET` moved into a multi-package preview line for the core package plus Azure, Azure DevOps, Fabric, and Power Platform provider/auth extensions. SCH consumers needed explicit prerelease constraints because older stable package versions can still participate in NuGet restore resolution.
 

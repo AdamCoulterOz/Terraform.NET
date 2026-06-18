@@ -31,6 +31,7 @@
 - `TerraformCommandResponseParser.ParseJsonUiStream(...)` exposes typed parsing for Terraform JSON UI streams without requiring callers to execute `Plan()`.
 - `TerraformJsonDocument`, `TerraformLabel`, `TFValue`, and `TFType` are public composition/value helpers.
 - `IEntraCredential` and `IEntraOidcCredential` are the shared semantic auth interfaces for Entra-backed provider credentials.
+- `Terraform.NET.AzureDevOps` exposes PAT and service-principal client-secret credentials for the Microsoft Azure DevOps Terraform provider; the provider package owns the Terraform field and environment names for both modes.
 
 ## Invariants
 - Do not mutate caller source Terraform files in place; provider rewriting occurs in the execution workspace.

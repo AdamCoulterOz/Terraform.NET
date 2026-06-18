@@ -70,7 +70,7 @@ Last updated: 2026-05-16 (Australia/Sydney)
    - init status and provider install state
    - resource drift and planned change records
    - outputs and resource keys as `TFValue`
-   - resource apply/provision/refresh/ephemeral operation records
+   - resource apply/provision/refresh/ephemeral operation records, including fractional-second elapsed durations from Terraform hook payloads
    - diagnostics and change summaries
    - enums for operation/action/severity discriminators and `TimeSpan` for elapsed durations
 8. `TerraformCommandResponseParser.ParseJsonUiStream(...)` is the public typed parser for Terraform JSON UI streams when callers need the canonical command response directly.
@@ -126,7 +126,7 @@ Last updated: 2026-05-16 (Australia/Sydney)
 ## Provider Auth Model (Current)
 - Provider packages own their provider-specific Terraform field names and environment variable names.
 - Core exposes `IEntraCredential` and `IEntraOidcCredential` as the shared semantic shape for Entra-backed credentials.
-- Azure, Fabric, and Power Platform OIDC helpers implement `IEntraOidcCredential`; Azure and Power Platform service-principal helpers implement `IEntraCredential` where their client identity is non-optional.
+- Azure, Azure DevOps, Fabric, and Power Platform provider packages own their provider-specific auth helpers. Azure, Fabric, and Power Platform OIDC helpers implement `IEntraOidcCredential`; Azure, Azure DevOps, and Power Platform service-principal helpers implement `IEntraCredential` where their client identity is non-optional.
 - The shared Entra/OIDC abstraction must not absorb provider-specific env-key naming, backend token behavior, or Azure SDK `TokenCredential` semantics. Those remain package-owned because they have different provider/runtime lifecycles.
 
 ## Current Limitations

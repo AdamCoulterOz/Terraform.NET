@@ -165,7 +165,7 @@ public class TerraformCommandResultTests
 			        {"@level":"info","@message":"Terraform 1.0.0","type":"version","terraform":"1.0.0","ui":"1.0"}
 			        {"@level":"info","@message":"random_pet.animal: Plan to create","type":"planned_change","change":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"create"}}
 			        {"@level":"info","@message":"random_pet.animal: Creating...","type":"apply_start","hook":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"create"}}
-			        {"@level":"info","@message":"random_pet.animal: Creation complete after 0s [id=smart-lizard]","type":"apply_complete","hook":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"create","id_key":"id","id_value":"smart-lizard","elapsed_seconds":0}}
+			        {"@level":"info","@message":"random_pet.animal: Creation complete after 1.25s [id=smart-lizard]","type":"apply_complete","hook":{"resource":{"addr":"random_pet.animal","module":"","resource":"random_pet.animal","implied_provider":"random","resource_type":"random_pet","resource_name":"animal","resource_key":null},"action":"create","id_key":"id","id_value":"smart-lizard","elapsed_seconds":1.25}}
 			        {"@level":"info","@message":"null_resource.none[0]: Provisioning with 'local-exec'...","type":"provision_start","hook":{"resource":{"addr":"null_resource.none[0]","module":"","resource":"null_resource.none[0]","implied_provider":"null","resource_type":"null_resource","resource_name":"none","resource_key":0},"provisioner":"local-exec"}}
 			        {"@level":"info","@message":"Outputs: 1","type":"outputs","outputs":{"pets":{"sensitive":false,"type":"string","value":"smart-lizard"}}}
 			        {"@level":"info","@message":"Apply complete! Resources: 1 added, 0 changed, 0 destroyed.","type":"change_summary","changes":{"add":1,"change":0,"remove":0,"operation":"apply"}}
@@ -183,7 +183,7 @@ public class TerraformCommandResultTests
 		result.ResourceOperations.First().Action.Should().Be(ResourceAction.Create);
 		result.ResourceOperations.Last().Type.Should().Be(ResourceOperationType.ApplyComplete);
 		result.ResourceOperations.Last().IdValue.Should().Be("smart-lizard");
-		result.ResourceOperations.Last().Elapsed.Should().Be(TimeSpan.Zero);
+		result.ResourceOperations.Last().Elapsed.Should().Be(TimeSpan.FromSeconds(1.25));
 		result.ProvisionOperations.Should().ContainSingle();
 		result.ProvisionOperations.Single().Type.Should().Be(ProvisionOperationType.ProvisionStart);
 		result.ProvisionOperations.Single().Provisioner.Should().Be("local-exec");

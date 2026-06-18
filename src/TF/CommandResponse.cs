@@ -586,7 +586,7 @@ internal static partial class CommandResponseParser
 			Sensitive = output.Sensitive,
 		};
 
-	private static TimeSpan? ToElapsed(int? elapsed)
+	private static TimeSpan? ToElapsed(double? elapsed)
 		=> elapsed.HasValue ? TimeSpan.FromSeconds(elapsed.Value) : null;
 
 	private static DiagnosticSeverity ParseDiagnosticSeverity(string? value)
@@ -771,7 +771,7 @@ internal static partial class CommandResponseParser
 
 		public string? IdValue { get; set; }
 
-		public int? ElapsedSeconds { get; set; }
+		public double? ElapsedSeconds { get; set; }
 		public string? Provisioner { get; set; }
 		public string? Output { get; set; }
 	}
