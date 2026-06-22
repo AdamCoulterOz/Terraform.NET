@@ -11,6 +11,17 @@ public class ProviderCollection
 
     public void SetDefault(Provider provider) => SetAliasInternal(DefaultAlias, provider);
 
+    /// <summary>Sets the default provider unless one of the same name is already registered as default.
+    /// Returns true if it was set, false if an equivalent default was already present. Use when more than
+    /// one facet may legitimately bind the same shared provider (e.g. CRM and Data both needing Fabric).</summary>
+    public bool TrySetDefault(Provider provider)
+    {
+        if (ProviderDictionary.ContainsKey((DefaultAlias, provider.Name)))
+            return false;
+        SetAliasInternal(DefaultAlias, provider);
+        return true;
+    }
+
     /// <param name="alias">Value can't be "default", as it is reserved.</param>
     public void SetAlias(string alias, Provider provider)
     {
