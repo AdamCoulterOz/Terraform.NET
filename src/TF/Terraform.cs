@@ -38,51 +38,52 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath, b
             RootPath.Delete(true);
     }
 
-    public async Task<InitResult> Init()
-        => await Command<InitResult>("init", withConfiguration: await Configuration.WriteConfigurationAsync(RootPath), withBackendConfig: true, asJson: true);
-    public async Task<RefreshResult> Refresh()
-        => await Command<RefreshResult>("refresh", withVars: true, asJson: true);
-    public async Task<ValidateResult> Validate()
-        => await Command<ValidateResult>("validate", asJson: true);
-    public async Task<ApplyResult> Apply()
-        => await Command<ApplyResult>("apply", withVars: true, autoApprove: true, asJson: true);
-    public async Task<ApplyResult> ApplyPlan()
+    public async Task<InitResult> Init(CancellationToken cancellationToken = default)
+        => await Command<InitResult>("init", withConfiguration: await Configuration.WriteConfigurationAsync(RootPath), withBackendConfig: true, asJson: true, cancellationToken: cancellationToken);
+    public async Task<RefreshResult> Refresh(CancellationToken cancellationToken = default)
+        => await Command<RefreshResult>("refresh", withVars: true, asJson: true, cancellationToken: cancellationToken);
+    public async Task<ValidateResult> Validate(CancellationToken cancellationToken = default)
+        => await Command<ValidateResult>("validate", asJson: true, cancellationToken: cancellationToken);
+    public async Task<ApplyResult> Apply(CancellationToken cancellationToken = default)
+        => await Command<ApplyResult>("apply", withVars: true, autoApprove: true, asJson: true, cancellationToken: cancellationToken);
+    public async Task<ApplyResult> ApplyPlan(CancellationToken cancellationToken = default)
     {
         EnsurePlanExists();
         return await Execute(
-            () => Command<ApplyResult>("apply", asJson: true, additionalArguments: [ManagedPlanFileName]),
+            () => Command<ApplyResult>("apply", asJson: true, additionalArguments: [ManagedPlanFileName], cancellationToken: cancellationToken),
             DeletePlanFile);
     }
-    public async Task<DestroyResult> Destroy()
-        => await Command<DestroyResult>("destroy", withVars: true, autoApprove: true, asJson: true);
-    public async Task<IReadOnlyDictionary<string, OutputValue>> Output()
-        => await Command<Dictionary<string, OutputValue>>("output", asJson: true);
-    public async Task<PlanResult> Plan()
+    public async Task<DestroyResult> Destroy(CancellationToken cancellationToken = default)
+        => await Command<DestroyResult>("destroy", withVars: true, autoApprove: true, asJson: true, cancellationToken: cancellationToken);
+    public async Task<IReadOnlyDictionary<string, OutputValue>> Output(CancellationToken cancellationToken = default)
+        => await Command<Dictionary<string, OutputValue>>("output", asJson: true, cancellationToken: cancellationToken);
+    public async Task<PlanResult> Plan(CancellationToken cancellationToken = default)
     {
         DeletePlanFile();
-        var result = await Command<PlanResult>("plan", withVars: true, withDetailedExitCode: true, outFile: ManagedPlanFileName, asJson: true);
+        var result = await Command<PlanResult>("plan", withVars: true, withDetailedExitCode: true, outFile: ManagedPlanFileName, asJson: true, cancellationToken: cancellationToken);
         if (!result.Success)
             DeletePlanFile();
         return result;
     }
 
-    public async Task<ShowResult> Show(bool deleteManagedPlan = true)
+    public async Task<ShowResult> Show(bool deleteManagedPlan = true, CancellationToken cancellationToken = default)
     {
         EnsurePlanExists();
         return deleteManagedPlan
-            ? await Execute(ShowManagedPlan, DeletePlanFile)
-            : await ShowManagedPlan();
+            ? await Execute(() => ShowManagedPlan(cancellationToken), DeletePlanFile)
+            : await ShowManagedPlan(cancellationToken);
     }
 
-    public async Task<TResult> Show<TResult>()
+    public async Task<TResult> Show<TResult>(CancellationToken cancellationToken = default)
     {
         EnsurePlanExists();
-        return await Execute(() => ShowJson<TResult>(), DeletePlanFile);
+        return await Execute(() => ShowJson<TResult>(cancellationToken), DeletePlanFile);
     }
 
     private async Task<TFResult> Command(string action, bool autoApprove = false, bool withVars = false,
         string? outFile = null, bool withConfiguration = false, bool asJson = false, bool withBackendConfig = false,
-        bool withDetailedExitCode = false, IEnumerable<string>? additionalArguments = null)
+        bool withDetailedExitCode = false, IEnumerable<string>? additionalArguments = null,
+        CancellationToken cancellationToken = default)
     {
         ProviderConfigurationRewriter.Rewrite(RootPath, Providers);
 
@@ -117,7 +118,19 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath, b
             command = command.WithStandardOutputPipe(PipeTarget.ToStream(OutputStream, true))
                              .WithStandardErrorPipe(PipeTarget.ToStream(OutputStream, true));
 
-        var cmdResult = await command.WithValidation(CommandResultValidation.None).ExecuteBufferedAsync();
+        // Pass the caller's token as CliWrap's GRACEFUL cancellation token (sends Ctrl-C/SIGINT and waits
+        // for the process to exit on its own), never the forceful one (which would SIGKILL). This lets
+        // terraform finish its current resource, flush state to the remote backend, release the lock, and
+        // exit cleanly so the run is resumable. Encodings are passed explicitly because the graceful overload
+        // has no encoding-defaulting variant; Console.OutputEncoding matches CliWrap's default behaviour, so
+        // an uncancelled run is byte-for-byte identical. When the token trips, CliWrap throws
+        // OperationCanceledException AFTER the process exits — it is allowed to propagate.
+        var cmdResult = await command.WithValidation(CommandResultValidation.None)
+            .ExecuteBufferedAsync(
+                Console.OutputEncoding,
+                Console.OutputEncoding,
+                forcefulCancellationToken: CancellationToken.None,
+                gracefulCancellationToken: cancellationToken);
 
         bool? planHasChanges = withDetailedExitCode && cmdResult.ExitCode == 2 ? true : null;
         var success = cmdResult.ExitCode == 0 || (planHasChanges.HasValue && planHasChanges.Value);
@@ -130,10 +143,11 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath, b
 
     private async Task<TResult> Command<TResult>(string action, bool autoApprove = false, bool withVars = false,
         string? outFile = null, bool withConfiguration = false, bool asJson = true, bool withBackendConfig = false,
-        bool withDetailedExitCode = false, IEnumerable<string>? additionalArguments = null)
+        bool withDetailedExitCode = false, IEnumerable<string>? additionalArguments = null,
+        CancellationToken cancellationToken = default)
     {
         var result = await Command(action, autoApprove, withVars, outFile, withConfiguration, asJson, withBackendConfig,
-            withDetailedExitCode, additionalArguments);
+            withDetailedExitCode, additionalArguments, cancellationToken);
         try
         {
             return DeserializeCommandResult<TResult>(result);
@@ -164,18 +178,18 @@ public class Terraform(Backend backend, DirectoryInfo rootPath, string tfPath, b
                 $"Terraform returned JSON, but it could not be deserialized into {typeof(TResult).FullName}.");
     }
 
-    private async Task<ShowResult> ShowManagedPlan()
+    private async Task<ShowResult> ShowManagedPlan(CancellationToken cancellationToken = default)
         => new()
         {
-            Json = await ShowJson<ShowJsonResult>(),
-            File = ShowFileResult.From(await ShowFile())
+            Json = await ShowJson<ShowJsonResult>(cancellationToken),
+            File = ShowFileResult.From(await ShowFile(cancellationToken))
         };
 
-    private Task<TResult> ShowJson<TResult>()
-        => Command<TResult>("show", asJson: true, additionalArguments: [ManagedPlanFileName]);
+    private Task<TResult> ShowJson<TResult>(CancellationToken cancellationToken = default)
+        => Command<TResult>("show", asJson: true, additionalArguments: [ManagedPlanFileName], cancellationToken: cancellationToken);
 
-    private Task<TFResult> ShowFile()
-        => Command("show", additionalArguments: [ManagedPlanFileName]);
+    private Task<TFResult> ShowFile(CancellationToken cancellationToken = default)
+        => Command("show", additionalArguments: [ManagedPlanFileName], cancellationToken: cancellationToken);
 
     private static async Task<TResult> Execute<TResult>(Func<Task<TResult>> action, Action cleanup)
     {
